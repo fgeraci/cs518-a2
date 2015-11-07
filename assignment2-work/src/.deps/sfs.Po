@@ -32,9 +32,9 @@ sfs.o: sfs.c /usr/include/stdc-predef.h params.h \
  /usr/local/include/fuse/fuse_common.h /usr/local/include/fuse/fuse_opt.h \
  /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
+ /usr/include/x86_64-linux-gnu/bits/time.h /usr/include/utime.h \
  /usr/include/x86_64-linux-gnu/sys/types.h \
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
- /usr/include/x86_64-linux-gnu/bits/time.h /usr/include/utime.h \
  /usr/include/x86_64-linux-gnu/sys/stat.h \
  /usr/include/x86_64-linux-gnu/sys/statvfs.h \
  /usr/include/x86_64-linux-gnu/bits/statvfs.h \
@@ -157,13 +157,13 @@ fuse.h:
 
 /usr/include/x86_64-linux-gnu/bits/wchar.h:
 
-/usr/include/x86_64-linux-gnu/sys/types.h:
-
-/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
-
 /usr/include/x86_64-linux-gnu/bits/time.h:
 
 /usr/include/utime.h:
+
+/usr/include/x86_64-linux-gnu/sys/types.h:
+
+/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
 
 /usr/include/x86_64-linux-gnu/sys/stat.h:
 
