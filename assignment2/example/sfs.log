@@ -1,0 +1,23 @@
+
+sfs_init()
+    conn:
+    proto_major = 7
+    proto_minor = 13
+    async_read = 1
+    max_write = 131072
+    max_readahead = 131072
+    capable = 0000007b
+    want = 00000010
+    context:
+    fuse = 00b33530
+    uid = 0
+    gid = 0
+    pid = 0
+    private_data = 00b33010
+    logfile = 00b33030
+    diskfile = /ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk
+    umask = 00000
+
+sfs_getattr(path="/", statbuf=0x6a34ad10)
+
+sfs_destroy(userdata=0x00b33010)
