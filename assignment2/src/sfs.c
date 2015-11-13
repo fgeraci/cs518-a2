@@ -29,9 +29,38 @@
 
 #include "log.h"
 
-#define DISK_FD (get_disk_fd())
+/* CS518 - Data Structures and MACROS */
+
+typedef struct inode inode_t;	// opaque
+
+struct inode {
+	// ideally we need to set the struct size to be 128 bytes
+	// will grow as we go
+	int inode_id; // 4 bytes - no padding
+	int pad[31];	// padd 31 * 4 = 124, change this as we add members to ensure inode is 128 bytes long
+};
+
+
+#define DISK_FD 		(get_disk_fd()) // not crazily needed but handy
+
+#define TOTAL_DISK_BLOCKS	512 // random initial value - 256 kb
+#define DISK_FILE_SIZE		(TOTAL_DISK_BLOCKS*BLOCK_SIZE)
+#define INODE_BLOCKS		32
+#define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
+	// TODO - ensure well-rounded inode size values though - pref. 128 b per inode for 128 inodes total (32*512b)/128	 
+
+
+struct inode_table {
+	inode_t table[MAX_INODES];
+};
+
+/* End Data Structures */
+
 
 static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
+
+	// TODO - change this to locate file in inode table and return its "path" from there
+
     strcpy(fpath, SFS_DATA->diskfile);
     strncat(fpath, path, PATH_MAX);
     log_msg("    sfs_fullpath:  diskfile = \"%s\", path = \"%s\", fpath = \"%s\"\n",
@@ -64,6 +93,9 @@ void *sfs_init(struct fuse_conn_info *conn)
     disk_open((SFS_DATA)->diskfile);
     struct stat *statbuf = (struct stat*) malloc(sizeof(struct stat));
     int i = lstat((SFS_DATA)->diskfile,statbuf);
+    
+    log_msg("\nDEBUG: inode size %d", sizeof(inode_t));
+
     log_msg("\nVIRTUAL DISK FILE STAT: \n");
     log_stat(statbuf);
 
