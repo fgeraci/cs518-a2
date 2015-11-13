@@ -45,17 +45,22 @@ struct inode {
 #define DISK_FD 		(get_disk_fd()) // not crazily needed but handy
 
 #define TOTAL_DISK_BLOCKS	512 // random initial value - 256 kb
-#define DISK_FILE_SIZE		(TOTAL_DISK_BLOCKS*BLOCK_SIZE)
 #define INODE_BLOCKS		32
-#define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
 
-#define INODE_BITMAP_SIZE	(MAX_INODES/8) // I will use sizeof(char) - e.g. 128/8 bytes for the bitmap
+#define DISK_FILE_SIZE		(TOTAL_DISK_BLOCKS*BLOCK_SIZE)
+#define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
+#define DATA_BLOCKS		(TOTAL_DISK_BLOCKS-INODE_BLOCKS-3) // 3 for 2 bitmaps and 1 Super Block
+
+#define INODE_BITMAP_SIZE	(MAX_INODES/8) 		// I will use sizeof(char) - e.g. 128/8 bytes for the bitmap
+#define DATA_BITMAP_SIZE	((DATA_BLOCKS/8)+1) 	// +1 to compensate the 1 Super Block (roof the decimal)
 
 	// TODO - DONE - ensure well-rounded inode size values though - pref. 128 b per inode for 128 inodes total (32*512b)/128	 
 
+// to be stored in BLOCK 2 and 3 in disk (indices 1 and 2 respectively)
+unsigned char inodes_bitmap[INODE_BITMAP_SIZE]; 
+unsigned char data_bitmap[DATA_BITMAP_SIZE];
 
 struct inode_table {
-	unsigned char bitmap[INODE_BITMAP_SIZE]; // to be stored in BLOCK # N in disk
 	inode_t table[MAX_INODES];
 } inodes_table;
 
