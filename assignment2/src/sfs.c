@@ -47,12 +47,16 @@ struct inode {
 #define DISK_FILE_SIZE		(TOTAL_DISK_BLOCKS*BLOCK_SIZE)
 #define INODE_BLOCKS		32
 #define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
-	// TODO - ensure well-rounded inode size values though - pref. 128 b per inode for 128 inodes total (32*512b)/128	 
+
+#define INODE_BITMAP_SIZE	((MAX_INODES/(8*sizeof(long)))+1)
+
+	// TODO - DONE - ensure well-rounded inode size values though - pref. 128 b per inode for 128 inodes total (32*512b)/128	 
 
 
 struct inode_table {
+	unsigned long bitmap[INODE_BITMAP_SIZE]; // to be stored in BLOCK # N in disk
 	inode_t table[MAX_INODES];
-};
+} inodes_table;
 
 /* End Data Structures */
 
