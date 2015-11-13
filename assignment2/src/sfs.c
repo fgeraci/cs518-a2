@@ -56,8 +56,8 @@ struct inode {
 	// ideally we need to set the struct size to be 128 bytes
 	// will grow as we go
 	int inode_id; 		// 4 bytes
-	char *path[MAX_PATH];	// 128 bytes
-	int pad[31];		// just padding to maitain 256 bytes for now
+	// char *path[MAX_PATH];	// 128 bytes
+	int pad[63];		// just padding to maitain 256 bytes for now
 };
 
 
