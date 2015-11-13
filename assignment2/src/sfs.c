@@ -29,6 +29,7 @@
 
 #include "log.h"
 
+#define DISK_FD (get_disk_fd())
 
 static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
     strcpy(fpath, SFS_DATA->diskfile);
@@ -58,9 +59,21 @@ void *sfs_init(struct fuse_conn_info *conn)
 {
     fprintf(stderr, "in bb-init\n");
     log_msg("\nCS518 - Initializing - sfs_init()\n");
+    
     /* Open disk file */
     disk_open((SFS_DATA)->diskfile);
+    struct stat *statbuf = (struct stat*) malloc(sizeof(struct stat));
+    int i = lstat((SFS_DATA)->diskfile,statbuf);
+    log_msg("\nVIRTUAL DISK FILE STAT: \n");
+    log_stat(statbuf);
+
+    log_msg("\nChecking diskfile size for initialization ... \n");
+    if(i != 0) {
+        perror("No STAT on diskfile");
+	exit(EXIT_FAILURE);
+    }
     /*    */    
+    
     log_conn(conn);
     log_fuse_context(fuse_get_context());
 
@@ -76,6 +89,8 @@ void *sfs_init(struct fuse_conn_info *conn)
  */
 void sfs_destroy(void *userdata)
 {
+    disk_close();
+    log_msg("\nDISKFILE Terminated OK\n");
     log_msg("\nsfs_destroy(userdata=0x%08x)\n", userdata);
 }
 

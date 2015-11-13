@@ -16,7 +16,9 @@
 
 int diskfile = -1;
 
-#define DISK_FD diskfile
+int get_disk_fd() {
+	return diskfile;
+}
 
 void disk_open(const char* diskfile_path)
 {

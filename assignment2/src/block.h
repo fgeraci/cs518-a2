@@ -14,5 +14,6 @@ void disk_open(const char* diskfile_path);
 void disk_close();
 int block_read(const int block_num, void *buf);
 int block_write(const int block_num, const void *buf);
+int get_disk_fd();
 
 #endif
