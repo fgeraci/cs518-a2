@@ -30,6 +30,14 @@
 #include "log.h"
 
 
+static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
+    strcpy(fpath, SFS_DATA->diskfile);
+    strncat(fpath, path, PATH_MAX);
+    log_msg("    sfs_fullpath:  diskfile = \"%s\", path = \"%s\", fpath = \"%s\"\n",
+		SFS_DATA->diskfile, path, fpath);
+}
+
+
 ///////////////////////////////////////////////////////////
 //
 // Prototypes for all these functions, and the C-style comments,
@@ -49,8 +57,10 @@
 void *sfs_init(struct fuse_conn_info *conn)
 {
     fprintf(stderr, "in bb-init\n");
-    log_msg("\nsfs_init()\n");
-    
+    log_msg("\nCS518 - Initializing - sfs_init()\n");
+    /* Open disk file */
+    disk_open((SFS_DATA)->diskfile);
+    /*    */    
     log_conn(conn);
     log_fuse_context(fuse_get_context());
 
@@ -79,10 +89,21 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
     char fpath[PATH_MAX];
+   
     
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
-	  path, statbuf);
-    
+    	  fpath, statbuf);
+ 
+    sfs_fullpath(fpath,path);
+
+    retstat = lstat(fpath,statbuf);
+
+    if(retstat != 0) {
+        retstat = -3; // bad lstat - add constant later
+    }
+
+    log_stat(statbuf); // print returned if any
+ 
     return retstat;
 }
 

@@ -1,5 +1,5 @@
 
-sfs_init()
+CS518 - Initializing - sfs_init()
     conn:
     proto_major = 7
     proto_minor = 13
@@ -9,15 +9,81 @@ sfs_init()
     capable = 0000007b
     want = 00000010
     context:
-    fuse = 00b33530
+    fuse = 00c8f530
     uid = 0
     gid = 0
     pid = 0
-    private_data = 00b33010
-    logfile = 00b33030
-    diskfile = /ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk
+    private_data = 00c8f010
+    logfile = 00c8f030
+    diskfile = /ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile
     umask = 00000
 
-sfs_getattr(path="/", statbuf=0x6a34ad10)
+sfs_getattr(path="", statbuf=0x560a1d10)
+    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
 
-sfs_destroy(userdata=0x00b33010)
+sfs_getattr(path="", statbuf=0x56aa2d10)
+    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/", statbuf=0x560a1d10)
+    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/", statbuf=0x56aa2d10)
+    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_destroy(userdata=0x00c8f010)

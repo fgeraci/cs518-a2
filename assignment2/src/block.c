@@ -16,6 +16,8 @@
 
 int diskfile = -1;
 
+#define DISK_FD diskfile
+
 void disk_open(const char* diskfile_path)
 {
     if(diskfile >= 0){
