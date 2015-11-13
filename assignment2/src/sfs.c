@@ -32,20 +32,13 @@
 
 /* CS518 - Data Structures and MACROS */
 
-typedef struct inode inode_t;	// opaque
-
-struct inode {
-	// ideally we need to set the struct size to be 128 bytes
-	// will grow as we go
-	int inode_id; // 4 bytes - no padding
-	int pad[31];	// padd 31 * 4 = 124, change this as we add members to ensure inode is 128 bytes long
-};
 
 
 #define DISK_FD 		(get_disk_fd()) // not crazily needed but handy
 
-#define TOTAL_DISK_BLOCKS	512 // random initial value - 256 kb
-#define INODE_BLOCKS		32
+#define TOTAL_DISK_BLOCKS	1024 // random initial value - 512 kb
+#define INODE_BLOCKS		64   // total possible nodes blocks, initially
+#define MAX_PATH		128  // longest name in bytes
 
 #define DISK_FILE_SIZE		(TOTAL_DISK_BLOCKS*BLOCK_SIZE)
 #define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
@@ -54,7 +47,19 @@ struct inode {
 #define INODE_BITMAP_SIZE	(MAX_INODES/8) 		// I will use sizeof(char) - e.g. 128/8 bytes for the bitmap
 #define DATA_BITMAP_SIZE	((DATA_BLOCKS/8)+1) 	// +1 to compensate the 1 Super Block (roof the decimal)
 
-	// TODO - DONE - ensure well-rounded inode size values though - pref. 128 b per inode for 128 inodes total (32*512b)/128	 
+	// TODO - DONE - ensure well-rounded inode size values though - pref. 256 b per inode for 256 inodes total (64*512b)/256	 
+
+
+typedef struct inode inode_t;	// opaque
+
+struct inode {
+	// ideally we need to set the struct size to be 128 bytes
+	// will grow as we go
+	int inode_id; 		// 4 bytes
+	char *path[MAX_PATH];	// 128 bytes
+	int pad[31];		// just padding to maitain 256 bytes for now
+};
+
 
 // to be stored in BLOCK 2 and 3 in disk (indices 1 and 2 respectively)
 unsigned char inodes_bitmap[INODE_BITMAP_SIZE]; 
