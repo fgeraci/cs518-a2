@@ -29,6 +29,7 @@
 
 #include "log.h"
 
+
 /* CS518 - Data Structures and MACROS */
 
 typedef struct inode inode_t;	// opaque
@@ -48,17 +49,65 @@ struct inode {
 #define INODE_BLOCKS		32
 #define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
 
-#define INODE_BITMAP_SIZE	((MAX_INODES/(8*sizeof(long)))+1)
+#define INODE_BITMAP_SIZE	(MAX_INODES/8) // I will use sizeof(char) - e.g. 128/8 bytes for the bitmap
 
 	// TODO - DONE - ensure well-rounded inode size values though - pref. 128 b per inode for 128 inodes total (32*512b)/128	 
 
 
 struct inode_table {
-	unsigned long bitmap[INODE_BITMAP_SIZE]; // to be stored in BLOCK # N in disk
+	unsigned char bitmap[INODE_BITMAP_SIZE]; // to be stored in BLOCK # N in disk
 	inode_t table[MAX_INODES];
 } inodes_table;
 
 /* End Data Structures */
+
+
+/* CS518 Util */
+
+/*
+ *	Given a position, for instance, 65, we can get:
+ *	the index in the bitmap array: 65 / 8 --> 8
+ *	the offset in the index of the map: 65 % 8 --> 1
+ *	so at map[8] << 1
+ *
+ */
+
+void set_bit(unsigned char *map, int position) {
+	unsigned int bit_indx, shift_indx;
+	bit_indx = (position)/8;	
+	shift_indx = (position)%8;
+	map[bit_indx] |= 1<<shift_indx;	
+}
+
+void unset_bit(unsigned char *map, int position) {
+	unsigned int bit_indx, shift_indx;
+	bit_indx = (position)/8;
+	shift_indx = (position)%8;
+	map[bit_indx] &= ~(1<<shift_indx);
+}
+
+int is_bit_set(unsigned char *map, int position) {
+	unsigned int bit_indx, shift_indx;
+	bit_indx = (position)/8;
+	shift_indx = (position)%8;
+	return map[bit_indx] & (1<<shift_indx);
+}
+
+/* Returns index position OR -1 is all FULL */
+
+int get_first_unset_bit(unsigned char *map, int length) { 
+	int i, j;
+	for (i = 0; i < length; i++) {
+		for (j = 1; j <= 8; j++) {
+			if(map[i] & (1<<(j-1))) {
+				return ((i*8)+(j-1));
+			}
+		}
+	}
+	return -1;
+}
+
+/* end Util */
 
 
 static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
