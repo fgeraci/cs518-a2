@@ -34,7 +34,7 @@
 
 
 
-#define DISK_FD 		(get_disk_fd()) // not crazily needed but handy
+#define DISK_FD 		(get_disk_fd()) // not needed, just for now
 
 #define TOTAL_DISK_BLOCKS	1024 // random initial value - 512 kb
 #define INODE_BLOCKS		64   // total possible nodes blocks, initially
@@ -47,17 +47,28 @@
 #define INODE_BITMAP_SIZE	(MAX_INODES/8) 		// I will use sizeof(char) - e.g. 128/8 bytes for the bitmap
 #define DATA_BITMAP_SIZE	((DATA_BLOCKS/8)+1) 	// +1 to compensate the 1 Super Block (roof the decimal)
 
+#define SUPER_BLOCK		0
+#define INODE_BITMAP		1
+#define DATA_BITMAP		2
+#define INODES_TABLE		3
+
+#define BLOCK_ADDRESS(indx)	(BLOCK_SIZE*indx)
+
 	// TODO - DONE - ensure well-rounded inode size values though - pref. 256 b per inode for 256 inodes total (64*512b)/256	 
 
 
 typedef struct inode inode_t;	// opaque
 
 struct inode {
-	// ideally we need to set the struct size to be 128 bytes
-	// will grow as we go
-	int inode_id; 		// 4 bytes
-	// char *path[MAX_PATH];	// 128 bytes
-	int pad[63];		// just padding to maitain 256 bytes for now
+	// ideally we need to set the struct size to be 256 bytes
+	int inode_id;
+	int node_type;
+	int size;
+	long last_accessed, created, modified;
+	int links_count;
+	int blocks;
+	unsigned int node_ptrs[15];
+	unsigned int padding[38];	// this pushes the struct to 256 bytes for now	
 };
 
 
@@ -162,15 +173,24 @@ void *sfs_init(struct fuse_conn_info *conn)
     log_msg("\nVIRTUAL DISK FILE STAT: \n");
     log_stat(statbuf);
 
-    log_msg("\nChecking diskfile size for initialization ... \n");
     if(i != 0) {
         perror("No STAT on diskfile");
 	exit(EXIT_FAILURE);
     }
-    /*    */    
-    
-    log_conn(conn);
+
+    log_msg("\nChecking SUPERBLOCK\n");
+    char *buf = (char*) malloc(BLOCK_SIZE);
+    if(!(block_read(SUPER_BLOCK, buf) > 0)) {
+    	// initialize superblock etc here in file
+    	log_msg("\nsfs_init: Initializing SUPERBLOCK - BITMAPS - INODES TABLE\n");
+    }
+    free(buf);
+    /*    */   
+ 
+    log_msg("\nFuse Context: \n"); 
+    // log_conn(conn);
     log_fuse_context(fuse_get_context());
+    log_msg("\nsfs_init OUT\n");
 
     return SFS_DATA;
 }
