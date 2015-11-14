@@ -59,6 +59,14 @@
 
 typedef struct inode inode_t;	// opaque
 
+// I am still not sure WHY we would actually need it though for our virtual disk.
+struct super_block {
+	int inodes;
+	int data_blocks;
+	int inodes_table_sector;
+	int fs_type;
+};
+
 struct inode {
 	// ideally we need to set the struct size to be 256 bytes
 	int inode_id;
@@ -68,17 +76,24 @@ struct inode {
 	int links_count;
 	int blocks;
 	unsigned int node_ptrs[15];
-	unsigned int padding[38];	// this pushes the struct to 256 bytes for now	
+	inode_t *next, *prev;		// handle overflow
+	unsigned int padding[32];	// this pushes the struct to 256 bytes for now	
 };
 
 
-// to be stored in BLOCK 2 and 3 in disk (indices 1 and 2 respectively)
-unsigned char inodes_bitmap[INODE_BITMAP_SIZE]; 
-unsigned char data_bitmap[DATA_BITMAP_SIZE];
+// to be stored in BLOCK 2 and 3 and 4 in disk (indices 1 and 2 respectively)
+// wrapping the bitmaps in structs to make read/write to dsik easier (???)
+struct inodes_bitmap {
+	unsigned char inodes_bitmap[INODE_BITMAP_SIZE]; 
+};
 
-struct inode_table {
+struct data_bitmap {
+	unsigned char data_bitmap[DATA_BITMAP_SIZE];
+};
+
+struct inodes_table {
 	inode_t table[MAX_INODES];
-} inodes_table;
+};
 
 /* End Data Structures */
 
@@ -179,10 +194,42 @@ void *sfs_init(struct fuse_conn_info *conn)
     }
 
     log_msg("\nChecking SUPERBLOCK\n");
+    
     char *buf = (char*) malloc(BLOCK_SIZE);
+ 
+    struct inodes_table inds_table;
+    struct inodes_bitmap inds_bitmap;
+    struct data_bitmap dt_bitmap;
+    
     if(!(block_read(SUPER_BLOCK, buf) > 0)) {
     	// initialize superblock etc here in file
     	log_msg("\nsfs_init: Initializing SUPERBLOCK - BITMAPS - INODES TABLE\n");
+   	
+	struct super_block superblock = { 
+		.inodes = MAX_INODES, 
+		.data_blocks = DATA_BLOCKS, 
+		.inodes_table_sector = INODES_TABLE, 
+		.fs_type = 0 
+	};
+
+	if (block_write(SUPER_BLOCK, &superblock) > 0)
+		log_msg("\n\tSUPERBLOCK CREATED\n");
+	
+	if (block_write(INODE_BITMAP, &inds_bitmap) > 0)
+		log_msg("\n\tINODES BITMAP CREATED\n");
+	
+	if (block_write(DATA_BITMAP, &dt_bitmap) > 0)
+		log_msg("\n\tDATA BITMAP CREATED\n");
+	
+	if (block_write(INODES_TABLE, &inds_table) > 0)
+		log_msg("\n\tINODES TABLE CREATED\n");
+
+    } else {
+    	log_msg("\n\tSUPERBLOCK FOUND - Reading INODES BITMAP, DATA BITMAP and INODES TABLE\n");
+	uint8_t *buffer = malloc(BLOCK_SIZE*sizeof(uint8_t));
+	if(block_read(INODE_BITMAP, buffer) > 0) {
+		
+	}
     }
     free(buf);
     /*    */   
