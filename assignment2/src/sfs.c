@@ -77,18 +77,19 @@ struct inode {
 	int blocks;
 	unsigned int node_ptrs[15];
 	inode_t *next, *prev;		// handle overflow
-	unsigned int padding[32];	// this pushes the struct to 256 bytes for now	
+	unsigned char path[64];		// confirm this is indeed 64 byes (allignment)
+	unsigned int padding[16];	// this pushes the struct to 256 bytes for now	
 };
 
 
 // to be stored in BLOCK 2 and 3 and 4 in disk (indices 1 and 2 respectively)
 // wrapping the bitmaps in structs to make read/write to dsik easier (???)
 struct inodes_bitmap {
-	unsigned char inodes_bitmap[INODE_BITMAP_SIZE]; 
+	unsigned char bitmap[INODE_BITMAP_SIZE]; 
 };
 
 struct data_bitmap {
-	unsigned char data_bitmap[DATA_BITMAP_SIZE];
+	unsigned char bitmap[DATA_BITMAP_SIZE];
 };
 
 struct inodes_table {
@@ -221,15 +222,80 @@ void *sfs_init(struct fuse_conn_info *conn)
 	if (block_write(DATA_BITMAP, &dt_bitmap) > 0)
 		log_msg("\n\tDATA BITMAP CREATED\n");
 	
+	/* Set up first time inodes here */
+	int i;
+	for(i = 0; i < MAX_INODES; ++i ) {
+		inds_table.table[i].inode_id = i;
+	}	
+	memcpy(&inds_table.table[0].path, "/",1);	// set inode 0 as root by default	
+	
+	int blocks;
+	int j = 0;
+	uint8_t *buffer = malloc(BLOCK_SIZE);
+	for(blocks = 0; blocks < INODE_BLOCKS; ++blocks) {
+		int offset = BLOCK_SIZE;
+		while(offset > 0 && offset >= sizeof(struct inode)) {
+			memcpy((buffer+(BLOCK_SIZE-offset)), &inds_table.table[blocks+j], sizeof(struct inode));
+			j++;
+			offset -= sizeof(struct inode);
+			log_msg("\n\tCREATED NODE: %d in BLOCK: %d\n",blocks+j,blocks);	
+		}
+		if(block_write(INODES_TABLE+blocks, buffer) <= 0) {
+			log_msg("\n\tFAILED TO CREATE NODES in BLOCK %d\n",blocks);
+			break;
+		} else {
+			--j;
+			memset(buffer,0,BLOCK_SIZE);
+		}
+		
+	}
+	/* end */
+	
 	if (block_write(INODES_TABLE, &inds_table) > 0)
-		log_msg("\n\tINODES TABLE CREATED\n");
+		log_msg("\n\tINODES TABLE CREATED - wrote %d nodes\n", i);
 
     } else {
     	log_msg("\n\tSUPERBLOCK FOUND - Reading INODES BITMAP, DATA BITMAP and INODES TABLE\n");
+	
 	uint8_t *buffer = malloc(BLOCK_SIZE*sizeof(uint8_t));
+	
 	if(block_read(INODE_BITMAP, buffer) > 0) {
-		
+		memcpy(&inds_bitmap, buffer, sizeof(struct inodes_bitmap));
+		memset(buffer,0,BLOCK_SIZE);
+		log_msg("\n\tINODES BITMAP READ\n");
 	}
+	if(block_read(DATA_BITMAP, buffer) > 0 ) {
+		memcpy(&dt_bitmap, buffer, sizeof(struct data_bitmap));
+		log_msg("\n\tDATA BITMAP INITIALIZA\n");	
+	}
+	memset(buffer,0,BLOCK_SIZE);
+	int i;
+	int j = 0;	// offset of added nodes thus far
+	inode_t curr; // = (struct inode*)malloc(sizeof(struct inode));
+	for(i = 0; i < INODE_BLOCKS; i++) {	
+		int offset = BLOCK_SIZE;
+		if(block_read(INODES_TABLE + i, buffer) > 0) {				// all blocks should be full
+			while(offset > 0 && offset >= sizeof(struct inode)) {		// there is something less
+				// the buffer has two inodes now			// and no remainder - if so, problem!
+				log_msg("\n\tAttempting load INODE: %d\n",i+j);
+				memcpy(&curr,(buffer+(BLOCK_SIZE-offset)),sizeof(struct inode));
+				inds_table.table[j+i] = curr;				// put it in the table
+				// sanity for debugging
+				log_msg("\n\tINODE: %d successfully loaded - with path: %s \n", inds_table.table[i+j].inode_id, inds_table.table[i+j].path);	
+				j++;
+				memset(&curr,0,sizeof(struct inode));
+				offset -= sizeof(struct inode);				// this assumes sizeof(inode)	
+				log_msg("\n\tDEBUG: Buffer will be moved %d bytes", BLOCK_SIZE-offset);
+				log_msg("\n\tOffset moved, new offset: %d\n",offset);
+											// is a divisor of BLOCK_SIZE
+			}
+			memset(buffer,0,BLOCK_SIZE);					// re initialize buffer
+			--j;
+		} else {
+			log_msg("\n\t *** FATAL: couldn't retrieve inode table from block: %d *** \n", INODES_TABLE+i);
+		}								
+	}
+	log_msg("\n\tINODES TABLE INITIALIZED\n");		
     }
     free(buf);
     /*    */   
