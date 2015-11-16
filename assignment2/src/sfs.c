@@ -164,6 +164,12 @@ static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
 // come indirectly from /usr/include/fuse.h
 //
 
+/* GLOBAL STRUCTS - TODO - fix this, make it elegant */
+
+struct inodes_table inds_table;
+struct inodes_bitmap inds_bitmap;
+struct data_bitmap dt_bitmap;
+
 /**
  * Initialize filesystem
  *
@@ -198,9 +204,6 @@ void *sfs_init(struct fuse_conn_info *conn)
     
     char *buf = (char*) malloc(BLOCK_SIZE);
  
-    struct inodes_table inds_table;
-    struct inodes_bitmap inds_bitmap;
-    struct data_bitmap dt_bitmap;
     
     if(!(block_read(SUPER_BLOCK, buf) > 0)) {
     	// initialize superblock etc here in file
