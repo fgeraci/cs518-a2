@@ -342,7 +342,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
  
     sfs_fullpath(fpath,path);
 
-    retstat = lstat(fpath,statbuf);
+    retstat = lstat(path,statbuf);
 
     if(retstat != 0) {
         retstat = -3; // bad lstat - add constant later
