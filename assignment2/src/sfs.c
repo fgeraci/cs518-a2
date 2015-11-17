@@ -22,6 +22,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <time.h>
+#include <sys/stat.h>
 
 #ifdef HAVE_SYS_XATTR_H
 #include <sys/xattr.h>
@@ -31,8 +33,6 @@
 
 
 /* CS518 - Data Structures and MACROS */
-
-
 
 #define DISK_FD 		(get_disk_fd()) // not needed, just for now
 
@@ -75,10 +75,11 @@ struct inode {
 	long last_accessed, created, modified;
 	int links_count;
 	int blocks;
+	struct stat *st;
 	unsigned int node_ptrs[15];
 	inode_t *next, *prev;		// handle overflow
 	unsigned char path[64];		// confirm this is indeed 64 byes (allignment)
-	unsigned int padding[16];	// this pushes the struct to 256 bytes for now	
+	unsigned int padding[14];	// this pushes the struct to 256 bytes for now	
 };
 
 
@@ -146,7 +147,6 @@ int get_first_unset_bit(unsigned char *map, int length) {
 
 /* end Util */
 
-
 static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
 
 	// TODO - change this to locate file in inode table and return its "path" from there
@@ -156,7 +156,6 @@ static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
     log_msg("    sfs_fullpath:  diskfile = \"%s\", path = \"%s\", fpath = \"%s\"\n",
 		SFS_DATA->diskfile, path, fpath);
 }
-
 
 ///////////////////////////////////////////////////////////
 //
@@ -169,6 +168,19 @@ static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
 struct inodes_table inds_table;
 struct inodes_bitmap inds_bitmap;
 struct data_bitmap dt_bitmap;
+
+
+struct inode *get_inode(char *path) {
+	int i;
+	for(i = 0; i < MAX_INODES; ++i) {
+		if(strcmp((char*)&inds_table.table[i].path,path) == 0)
+			return &inds_table.table[i];
+	}
+	return NULL;
+}
+
+/* CLEAN UP STRING */
+
 
 /**
  * Initialize filesystem
@@ -229,9 +241,32 @@ void *sfs_init(struct fuse_conn_info *conn)
 	int i;
 	for(i = 0; i < MAX_INODES; ++i ) {
 		inds_table.table[i].inode_id = i;
-	}	
-	memcpy(&inds_table.table[0].path, "/",1);	// set inode 0 as root by default	
+	}
 	
+	/* Initialize root node - 0 */	
+	time_t t = time(NULL);
+	int uid = getuid();
+	int gid = getegid();
+	struct stat st = {
+		.st_ino = 0,
+		.st_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IROTH,
+		.st_nlink = 0,
+		.st_uid = uid,
+		.st_gid = gid,
+		.st_size = 0,
+		.st_blksize = BLOCK_SIZE,
+		.st_blocks = 0,
+		.st_atime = t,
+		.st_mtime = t,
+		.st_ctime = t	
+	};
+
+	log_msg("DEBUG: Root stat created\n");
+	log_stat(&st);
+ 	inds_table.table[0].st = &st;			// prime the first stat and add it to the root node	
+	memcpy(&inds_table.table[0].path, "/",1);	// set inode 0 as root by default	
+	/* end */	
+
 	int blocks;
 	int j = 0;
 	uint8_t *buffer = malloc(BLOCK_SIZE);
@@ -334,19 +369,18 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
-    char fpath[PATH_MAX];
-   
     
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
-    	  fpath, statbuf);
+    	  path, statbuf);
  
-    sfs_fullpath(fpath,path);
-
-    retstat = lstat(path,statbuf);
-
-    if(retstat != 0) {
-        retstat = -3; // bad lstat - add constant later
+    // sfs_fullpath(fpath,path);
+    inode_t *n = get_inode((char*) path);
+    if(n) {
+    	memcpy(statbuf,n->st,sizeof(struct stat));
+    } else {
+	retstat = -3;
     }
+    // retstat = lstat(path,statbuf);
 
     log_stat(statbuf); // print returned if any
  
