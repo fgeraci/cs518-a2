@@ -76,10 +76,11 @@ struct inode {
 	int links_count;
 	int blocks;
 	struct stat *st;
+	int bit_pos;
 	unsigned int node_ptrs[15];
 	inode_t *next, *prev;		// handle overflow
 	unsigned char path[64];		// confirm this is indeed 64 byes (allignment)
-	unsigned int padding[14];	// this pushes the struct to 256 bytes for now	
+	unsigned int padding[13];	// this pushes the struct to 256 bytes for now	
 };
 
 
@@ -114,13 +115,15 @@ void set_bit(unsigned char *map, int position) {
 	unsigned int bit_indx, shift_indx;
 	bit_indx = (position)/8;	
 	shift_indx = (position)%8;
+	log_msg("\nDEBUG: SETTING BIT INDEX: %d POSITION: %d\n",bit_indx,shift_indx);
 	map[bit_indx] |= 1<<shift_indx;	
 }
 
 void unset_bit(unsigned char *map, int position) {
 	unsigned int bit_indx, shift_indx;
 	bit_indx = (position)/8;
-	shift_indx = (position)%8;
+	shift_indx = (position)%8;	
+	log_msg("\nDEBUG: CLEARING BIT INDEX: %d POSITION: %d\n",bit_indx,shift_indx);
 	map[bit_indx] &= ~(1<<shift_indx);
 }
 
@@ -135,9 +138,10 @@ int is_bit_set(unsigned char *map, int position) {
 
 int get_first_unset_bit(unsigned char *map, int length) { 
 	int i, j;
-	for (i = 0; i < length; i++) {
+	for (i = 0; i < length/8; i++) {
 		for (j = 1; j <= 8; j++) {
-			if(map[i] & (1<<(j-1))) {
+			if(!(map[i] & (1<<(j-1)))) {
+				log_msg("\nDEBUG: CLEAR BIT FOUND AT INDEX: %d POSITION: %d\n",i,j-1);
 				return ((i*8)+(j-1));
 			}
 		}
@@ -173,8 +177,10 @@ struct data_bitmap dt_bitmap;
 struct inode *get_inode(char *path) {
 	int i;
 	for(i = 0; i < MAX_INODES; ++i) {
-		if(strcmp((char*)&inds_table.table[i].path,path) == 0)
+		if(strcmp((char*)&inds_table.table[i].path,path) == 0) {
+			log_msg("\n\tFound node '%s'\n", path);
 			return &inds_table.table[i];
+		}
 	}
 	return NULL;
 }
@@ -201,8 +207,11 @@ void *sfs_init(struct fuse_conn_info *conn)
     disk_open((SFS_DATA)->diskfile);
     struct stat *statbuf = (struct stat*) malloc(sizeof(struct stat));
     int i = lstat((SFS_DATA)->diskfile,statbuf);
-    
-    log_msg("\nDEBUG: inode size %d", sizeof(inode_t));
+    struct stat *tstStat = (struct stat*) malloc(sizeof(struct stat));
+    lstat("/", tstStat);
+    log_msg("\n\nDEBUG: Test stat: \n\n");
+    log_stat(tstStat); 
+    log_msg("\n\nDEBUG: inode size %d", sizeof(inode_t));
 
     log_msg("\nVIRTUAL DISK FILE STAT: \n");
     log_stat(statbuf);
@@ -249,7 +258,7 @@ void *sfs_init(struct fuse_conn_info *conn)
 	int gid = getegid();
 	struct stat st = {
 		.st_ino = 0,
-		.st_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IROTH,
+		.st_mode = S_IRWXU | S_IRGRP | S_IROTH,
 		.st_nlink = 0,
 		.st_uid = uid,
 		.st_gid = gid,
@@ -262,9 +271,16 @@ void *sfs_init(struct fuse_conn_info *conn)
 	};
 
 	log_msg("DEBUG: Root stat created\n");
+	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, MAX_INODES);
+	log_msg("\nDEBUG: First unset bit is: %d\n", firstBit);
+	if(firstBit > -1) { // 0 counts as well
+		set_bit(&inds_bitmap.bitmap,firstBit);			// how are we keeping track which has what ???
+		inds_table.table[firstBit].bit_pos = firstBit;		// each inode will keep track of its bitmap
+		log_msg("\nDEBUG: Bit %d successfully set\n", firstBit); 
+	}
 	log_stat(&st);
- 	inds_table.table[0].st = &st;			// prime the first stat and add it to the root node	
-	memcpy(&inds_table.table[0].path, "/",1);	// set inode 0 as root by default	
+ 	inds_table.table[firstBit].st = &st;			// prime the first stat and add it to the root node	
+	memcpy(&inds_table.table[firstBit].path, "/",1);	// set inode 0 as root by default	
 	/* end */	
 
 	int blocks;
@@ -374,6 +390,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
     	  path, statbuf);
  
     // sfs_fullpath(fpath,path);
+    memset(statbuf,0,sizeof(struct stat));
     inode_t *n = get_inode((char*) path);
     if(n) {
     	memcpy(statbuf,n->st,sizeof(struct stat));
