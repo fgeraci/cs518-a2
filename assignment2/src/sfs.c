@@ -213,9 +213,6 @@ void *sfs_init(struct fuse_conn_info *conn)
     log_stat(tstStat); 
     log_msg("\n\nDEBUG: inode size %d", sizeof(inode_t));
 
-    log_msg("\nVIRTUAL DISK FILE STAT: \n");
-    log_stat(statbuf);
-
     if(i != 0) {
         perror("No STAT on diskfile");
 	exit(EXIT_FAILURE);
@@ -258,7 +255,7 @@ void *sfs_init(struct fuse_conn_info *conn)
 	int gid = getegid();
 	struct stat st = {
 		.st_ino = 0,
-		.st_mode = S_IRWXU | S_IRGRP | S_IROTH,
+		.st_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IROTH,
 		.st_nlink = 0,
 		.st_uid = uid,
 		.st_gid = gid,
@@ -298,6 +295,7 @@ void *sfs_init(struct fuse_conn_info *conn)
 			log_msg("\n\tFAILED TO CREATE NODES in BLOCK %d\n",blocks);
 			break;
 		} else {
+			log_msg("\nBLOCK %d written OK\n", blocks);
 			--j;
 			memset(buffer,0,BLOCK_SIZE);
 		}
@@ -305,8 +303,8 @@ void *sfs_init(struct fuse_conn_info *conn)
 	}
 	/* end */
 	
-	if (block_write(INODES_TABLE, &inds_table) > 0)
-		log_msg("\n\tINODES TABLE CREATED - wrote %d nodes\n", i);
+	// if (block_write(INODES_TABLE, &inds_table) > 0)
+	//	log_msg("\n\tINODES TABLE CREATED - wrote %d nodes\n", i);
 
     } else {
     	log_msg("\n\tSUPERBLOCK FOUND - Reading INODES BITMAP, DATA BITMAP and INODES TABLE\n");
