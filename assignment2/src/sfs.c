@@ -87,11 +87,13 @@ struct inode {
 // to be stored in BLOCK 2 and 3 and 4 in disk (indices 1 and 2 respectively)
 // wrapping the bitmaps in structs to make read/write to dsik easier (???)
 struct inodes_bitmap {
-	unsigned char bitmap[INODE_BITMAP_SIZE]; 
+	unsigned char bitmap[INODE_BITMAP_SIZE];
+	int size; 
 };
 
 struct data_bitmap {
 	unsigned char bitmap[DATA_BITMAP_SIZE];
+	int size;
 };
 
 struct inodes_table {
@@ -138,7 +140,7 @@ int is_bit_set(unsigned char *map, int position) {
 
 int get_first_unset_bit(unsigned char *map, int length) { 
 	int i, j;
-	for (i = 0; i < length/8; i++) {
+	for (i = 0; i < length; i++) {
 		for (j = 1; j <= 8; j++) {
 			if(!(map[i] & (1<<(j-1)))) {
 				log_msg("\nDEBUG: CLEAR BIT FOUND AT INDEX: %d POSITION: %d\n",i,j-1);
@@ -214,6 +216,9 @@ void *sfs_init(struct fuse_conn_info *conn)
     log_stat(tstStat); 
     log_msg("\n\nDEBUG: inode size %d", sizeof(inode_t));
 
+    inds_bitmap.size = INODE_BITMAP_SIZE;
+    dt_bitmap.size = DATA_BITMAP_SIZE;
+
     if(i != 0) {
         perror("No STAT on diskfile");
 	exit(EXIT_FAILURE);
@@ -256,20 +261,22 @@ void *sfs_init(struct fuse_conn_info *conn)
 	int gid = getegid();
 	
 	struct stat *st = (struct stat*) malloc(sizeof(struct stat));
+	st->st_dev = 2055;
 	st->st_ino = 0;
 	st->st_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IROTH;
 	st->st_nlink = 0;
 	st->st_uid = uid;
 	st->st_gid = gid;
 	st->st_size = 0;
+	st->st_rdev = 0;
 	st->st_blksize = BLOCK_SIZE;
-	st->st_blocks = 0;
+	st->st_blocks = 1;
 	st->st_atime = t;
 	st->st_mtime = t;
 	st->st_ctime = t;	
 	
 	log_msg("DEBUG: Root stat created\n");
-	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, MAX_INODES);
+	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, inds_bitmap.size);
 	log_msg("\nDEBUG: First unset bit is: %d\n", firstBit);
 	if(firstBit > -1) { // 0 counts as well
 		set_bit(&inds_bitmap.bitmap,firstBit);			// how are we keeping track which has what ???
@@ -421,8 +428,41 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     int retstat = 0;
     log_msg("\nsfs_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
 	    path, mode, fi);
-    
-    
+   
+    // find an available block
+    int block = get_first_unset_bit(&dt_bitmap.bitmap, dt_bitmap.size);
+    // find the inode in question
+    inode_t *n = get_inode((char*)path); 
+    if(n) {
+	retstat = -2; // inode taken	
+    } else {
+	// find a clear inode
+	int inode_indx = get_first_unset_bit(&inds_bitmap.bitmap,inds_bitmap.size);
+	if(inode_indx >= 0) {
+	    // create stat
+	    struct stat *st = (struct stat*) malloc(sizeof(struct stat));
+	    st->st_dev = 2055;
+	    st->st_ino = 0;
+	    st->st_mode = mode;
+	    st->st_nlink = 0;
+	    st->st_uid = getuid();
+  	    st->st_gid = getegid();
+	    st->st_size = 0;
+	    st->st_rdev = 0;
+	    st->st_blksize = BLOCK_SIZE;
+	    st->st_blocks = 1;
+     	    st->st_atime = time(NULL);
+	    st->st_mtime = time(NULL);
+	    st->st_ctime = time(NULL);
+	    // get node and link the stat
+	    n = &inds_table.table[inode_indx];
+	    n->st = st;
+            // write to disk
+            // ...	
+	} else {
+            retstat = -3; // error, no more room
+        }	
+    }
     return retstat;
 }
 
