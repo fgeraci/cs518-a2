@@ -176,6 +176,7 @@ struct data_bitmap dt_bitmap;
 
 struct inode *get_inode(char *path) {
 	int i;
+	log_msg("\nDEBUG: Looking for inode with path: %s\n", path);
 	for(i = 0; i < MAX_INODES; ++i) {
 		if(strcmp((char*)&inds_table.table[i].path,path) == 0) {
 			log_msg("\n\tFound node '%s'\n", path);
@@ -253,20 +254,20 @@ void *sfs_init(struct fuse_conn_info *conn)
 	time_t t = time(NULL);
 	int uid = getuid();
 	int gid = getegid();
-	struct stat st = {
-		.st_ino = 0,
-		.st_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IROTH,
-		.st_nlink = 0,
-		.st_uid = uid,
-		.st_gid = gid,
-		.st_size = 0,
-		.st_blksize = BLOCK_SIZE,
-		.st_blocks = 0,
-		.st_atime = t,
-		.st_mtime = t,
-		.st_ctime = t	
-	};
-
+	
+	struct stat *st = (struct stat*) malloc(sizeof(struct stat));
+	st->st_ino = 0;
+	st->st_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IROTH;
+	st->st_nlink = 0;
+	st->st_uid = uid;
+	st->st_gid = gid;
+	st->st_size = 0;
+	st->st_blksize = BLOCK_SIZE;
+	st->st_blocks = 0;
+	st->st_atime = t;
+	st->st_mtime = t;
+	st->st_ctime = t;	
+	
 	log_msg("DEBUG: Root stat created\n");
 	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, MAX_INODES);
 	log_msg("\nDEBUG: First unset bit is: %d\n", firstBit);
@@ -275,8 +276,8 @@ void *sfs_init(struct fuse_conn_info *conn)
 		inds_table.table[firstBit].bit_pos = firstBit;		// each inode will keep track of its bitmap
 		log_msg("\nDEBUG: Bit %d successfully set\n", firstBit); 
 	}
-	log_stat(&st);
- 	inds_table.table[firstBit].st = &st;			// prime the first stat and add it to the root node	
+	log_stat(st);
+ 	inds_table.table[firstBit].st = st;			// prime the first stat and add it to the root node	
 	memcpy(&inds_table.table[firstBit].path, "/",1);	// set inode 0 as root by default	
 	/* end */	
 
@@ -383,19 +384,20 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
-    
+ 
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
     	  path, statbuf);
  
     // sfs_fullpath(fpath,path);
     memset(statbuf,0,sizeof(struct stat));
     inode_t *n = get_inode((char*) path);
+    log_msg("\nSTAT from inode: %d with path %s\n",n->inode_id, n->path);
     if(n) {
-    	memcpy(statbuf,n->st,sizeof(struct stat));
+	statbuf = n->st;
+	log_msg("\nDEBUG: Copying stat info from node %s\n", path);
     } else {
 	retstat = -3;
     }
-    // retstat = lstat(path,statbuf);
 
     log_stat(statbuf); // print returned if any
  
