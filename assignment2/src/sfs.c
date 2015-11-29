@@ -266,15 +266,13 @@ void *sfs_init(struct fuse_conn_info *conn)
 	// put it in the heap
 	struct stat *st = (struct stat*) malloc(sizeof(struct stat));
 	memset(st,0,sizeof(struct stat));
-	/* Test */
-	char *tmpPath = "/";
-	get_full_path(tmpPath);
-	lstat(tmpPath,st);	
-	/*
+
+	/* Set the main stat */
+	lstat(SFS_DATA->diskfile,st);	
 	st->st_ino = 0;
 	st->st_mode = S_IFDIR | 0755;
-	*/	
-	log_msg("DEBUG: Root stat created\n");
+
+	log_msg("\nDEBUG: Root stat created\n");
 	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, inds_bitmap.size);
 	log_msg("\nDEBUG: First unset bit is: %d\n", firstBit);
 	if(firstBit > -1) { // 0 counts as well
@@ -395,12 +393,20 @@ int sfs_getattr(const char *path, struct stat *statbuf)
     	  path, statbuf);
     char *tmp = (char*) malloc(128);
     sfs_fullpath(tmp,path);
-
-    log_msg("\ntmp path is: %s\n",tmp);
-    if(strcmp(path,"/") == 0) {
-        lstat(SFS_DATA->diskfile,statbuf);
-	statbuf->st_mode = S_IFDIR | 0755;
-	statbuf->st_ino = 0;
+    memset(statbuf,0,sizeof(struct stat));
+    inode_t *n = get_inode(path);
+    if(n && n->st) {
+    	log_msg("\nDEBUG: inode found with stat\n");
+	memcpy(statbuf,n->st,sizeof(struct stat));
+    } else {
+    	log_msg("\ntmp path is: %s\n",tmp);
+    	if(strcmp(path,"/") == 0) {
+       	 	lstat(SFS_DATA->diskfile,statbuf);
+		statbuf->st_mode = S_IFDIR | 0755;
+		statbuf->st_ino = 0;
+    	} else {
+    		// deal with other nodes here
+    	}
     }
 
     log_stat(statbuf); // print returned if any
@@ -436,26 +442,34 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	// find a clear inode
 	int inode_indx = get_first_unset_bit(&inds_bitmap.bitmap,inds_bitmap.size);
 	if(inode_indx >= 0) {
+	    
 	    // create stat
 	    struct stat *st = (struct stat*) malloc(sizeof(struct stat));
-	    st->st_dev = 2055;
+	    lstat(path,st);
 	    st->st_ino = 0;
 	    st->st_mode = mode;
 	    st->st_nlink = 0;
-	    st->st_uid = getuid();
-  	    st->st_gid = getegid();
-	    st->st_size = 0;
-	    st->st_rdev = 0;
-	    st->st_blksize = BLOCK_SIZE;
-	    st->st_blocks = 1;
      	    st->st_atime = time(NULL);
 	    st->st_mtime = time(NULL);
 	    st->st_ctime = time(NULL);
+	    
 	    // get node and link the stat
 	    n = &inds_table.table[inode_indx];
 	    n->st = st;
+	    n->inode_id = inode_indx;
             // write to disk
-            // ...	
+            	// find free block
+            	// the main intention is to get the main block to store
+            	// the file's stat
+            int main_block = get_first_unset_bit(&dt_bitmap.bitmap, dt_bitmap.size);
+	    if(main_block < 0) {
+	    	log_msg("\nERROR: disk is full !!!\n");
+		return -3;
+ 	    } else {
+    	    	log_msg("\nDEBUG: data block found, ceating file ... \n");
+		// save the file's main block
+		block_write(main_block,n->st);
+	    }
 	} else {
             retstat = -3; // error, no more room
         }	
