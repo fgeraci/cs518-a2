@@ -151,6 +151,8 @@ int get_first_unset_bit(unsigned char *map, int length) {
 	return -1;
 }
 
+void get_full_path(char *path); 
+
 /* end Util */
 
 static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
@@ -210,10 +212,11 @@ void *sfs_init(struct fuse_conn_info *conn)
     disk_open((SFS_DATA)->diskfile);
     struct stat *statbuf = (struct stat*) malloc(sizeof(struct stat));
     int i = lstat((SFS_DATA)->diskfile,statbuf);
-    struct stat *tstStat = (struct stat*) malloc(sizeof(struct stat));
-    lstat("/", tstStat);
+    
+    // struct stat *tstStat = (struct stat*) malloc(sizeof(struct stat));
+    // lstat("/", tstStat);
     log_msg("\n\nDEBUG: Test stat: \n\n");
-    log_stat(tstStat); 
+    log_stat(statbuf); 
     log_msg("\n\nDEBUG: inode size %d", sizeof(inode_t));
 
     inds_bitmap.size = INODE_BITMAP_SIZE;
@@ -260,21 +263,17 @@ void *sfs_init(struct fuse_conn_info *conn)
 	int uid = getuid();
 	int gid = getegid();
 	
+	// put it in the heap
 	struct stat *st = (struct stat*) malloc(sizeof(struct stat));
-	st->st_dev = 2055;
+	memset(st,0,sizeof(struct stat));
+	/* Test */
+	char *tmpPath = "/";
+	get_full_path(tmpPath);
+	lstat(tmpPath,st);	
+	/*
 	st->st_ino = 0;
-	st->st_mode = S_IFDIR | S_IRWXU | S_IRGRP | S_IROTH;
-	st->st_nlink = 0;
-	st->st_uid = uid;
-	st->st_gid = gid;
-	st->st_size = 0;
-	st->st_rdev = 0;
-	st->st_blksize = BLOCK_SIZE;
-	st->st_blocks = 1;
-	st->st_atime = t;
-	st->st_mtime = t;
-	st->st_ctime = t;	
-	
+	st->st_mode = S_IFDIR | 0755;
+	*/	
 	log_msg("DEBUG: Root stat created\n");
 	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, inds_bitmap.size);
 	log_msg("\nDEBUG: First unset bit is: %d\n", firstBit);
@@ -391,23 +390,21 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
- 
+
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
     	  path, statbuf);
- 
-    // sfs_fullpath(fpath,path);
-    memset(statbuf,0,sizeof(struct stat));
-    inode_t *n = get_inode((char*) path);
-    log_msg("\nSTAT from inode: %d with path %s\n",n->inode_id, n->path);
-    if(n) {
-	statbuf = n->st;
-	log_msg("\nDEBUG: Copying stat info from node %s\n", path);
-    } else {
-	retstat = -3;
+    char *tmp = (char*) malloc(128);
+    sfs_fullpath(tmp,path);
+
+    log_msg("\ntmp path is: %s\n",tmp);
+    if(strcmp(path,"/") == 0) {
+        lstat(SFS_DATA->diskfile,statbuf);
+	statbuf->st_mode = S_IFDIR | 0755;
+	statbuf->st_ino = 0;
     }
 
     log_stat(statbuf); // print returned if any
- 
+
     return retstat;
 }
 
@@ -668,6 +665,14 @@ void sfs_usage()
 {
     fprintf(stderr, "usage:  sfs [FUSE and mount options] diskFile mountPoint\n");
     abort();
+}
+
+void get_full_path(char *path) {
+	char *fpath = (char*) malloc(64*sizeof(char));
+	strcpy(fpath, SFS_DATA->diskfile);
+	strncat(fpath,path,64);
+	log_msg("\nDEBUG: path: %s with full path: %s\n",path,fpath);
+	path = fpath;
 }
 
 int main(int argc, char *argv[])
