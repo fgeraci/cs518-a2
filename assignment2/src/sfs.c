@@ -70,16 +70,17 @@ struct super_block {
 struct inode {
 	// ideally we need to set the struct size to be 256 bytes
 	int inode_id;
-	int node_type;
 	int size;
+	mode_t st_mode;
 	long last_accessed, created, modified;
 	int links_count;
 	int blocks;
-	struct stat *st;
+	int uid, gid;
 	int bit_pos;
-	unsigned int node_ptrs[15];
+	unsigned int block_ptrs[15];
 	inode_t *next, *prev;		// handle overflow
-	unsigned char path[64];		// confirm this is indeed 64 byes (allignment)
+	unsigned char path[64];
+	int is_dir;		// confirm this is indeed 64 byes (allignment)
 	unsigned int padding[13];	// this pushes the struct to 256 bytes for now	
 };
 
@@ -262,28 +263,26 @@ void *sfs_init(struct fuse_conn_info *conn)
 	time_t t = time(NULL);
 	int uid = getuid();
 	int gid = getegid();
-	
-	// put it in the heap
-	struct stat *st = (struct stat*) malloc(sizeof(struct stat));
-	memset(st,0,sizeof(struct stat));
-
-	/* Set the main stat */
-	lstat(SFS_DATA->diskfile,st);	
-	st->st_ino = 0;
-	st->st_mode = S_IFDIR | 0755;
-
-	log_msg("\nDEBUG: Root stat created\n");
 	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, inds_bitmap.size);
 	log_msg("\nDEBUG: First unset bit is: %d\n", firstBit);
 	if(firstBit > -1) { // 0 counts as well
-		set_bit(&inds_bitmap.bitmap,firstBit);			// how are we keeping track which has what ???
+		set_bit(&inds_bitmap.bitmap,firstBit);	
 		inds_table.table[firstBit].bit_pos = firstBit;		// each inode will keep track of its bitmap
 		log_msg("\nDEBUG: Bit %d successfully set\n", firstBit); 
 	}
-	log_stat(st);
- 	inds_table.table[firstBit].st = st;			// prime the first stat and add it to the root node	
-	memcpy(&inds_table.table[firstBit].path, "/",1);	// set inode 0 as root by default	
-	/* end */	
+	
+	memcpy(&inds_table.table[firstBit].path, "/",1);	// set inode 0 as root by default			
+	inode_t* n = &inds_table.table[firstBit];
+	n->st_mode = S_IFDIR | 0755;
+	n->inode_id = 0;
+	n->size = 0;
+	n->created = t;
+	n->links_count = 2; // at least . and ..
+	n->blocks = 0;
+	n->uid = uid;
+	n->gid = gid;
+	n->is_dir = 1;
+	/* end */
 
 	int blocks;
 	int j = 0;
@@ -393,22 +392,27 @@ int sfs_getattr(const char *path, struct stat *statbuf)
     	  path, statbuf);
     char *tmp = (char*) malloc(128);
     sfs_fullpath(tmp,path);
+
     memset(statbuf,0,sizeof(struct stat));
+    // handle other files and directories here
     inode_t *n = get_inode(path);
-    if(n && n->st) {
-    	log_msg("\nDEBUG: inode found with stat\n");
-	memcpy(statbuf,n->st,sizeof(struct stat));
+    if(n) {
+      	log_msg("\nDEBUG: inode found with stat\n");
+        statbuf->st_mode = n->st_mode;
+	statbuf->st_nlink = n->links_count;
+	statbuf->st_uid = n->uid;
+	statbuf->st_gid = n->gid;
+	statbuf->st_ctime = n->created;
     } else {
     	log_msg("\ntmp path is: %s\n",tmp);
-    	if(strcmp(path,"/") == 0) {
-       	 	lstat(SFS_DATA->diskfile,statbuf);
-		statbuf->st_mode = S_IFDIR | 0755;
-		statbuf->st_ino = 0;
-    	} else {
-    		// deal with other nodes here
-    	}
+     	memset(statbuf,0,sizeof(struct stat));
+	if(strcmp(path,"/") == 0) {
+       	    // lstat(SFS_DATA->diskfile,statbuf);
+	    statbuf->st_mode = S_IFDIR | 0755;
+	    // statbuf->st_ino = 0;
+	    statbuf->st_nlink = 2;
+        }    
     }
-
     log_stat(statbuf); // print returned if any
 
     return retstat;
@@ -455,9 +459,9 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	    
 	    // get node and link the stat
 	    n = &inds_table.table[inode_indx];
-	    n->st = st;
-	    n->inode_id = inode_indx;
-            // write to disk
+	    // n->st = st;
+            
+	    // write to disk
             	// find free block
             	// the main intention is to get the main block to store
             	// the file's stat
@@ -468,7 +472,17 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
  	    } else {
     	    	log_msg("\nDEBUG: data block found, ceating file ... \n");
 		// save the file's main block
-		block_write(main_block,n->st);
+		// this is done though the inode, is not needed - block_write(main_block,n->st);
+			
+		// next, update inode for persistency and its block
+		n->inode_id = inode_indx;
+		n->size = BLOCK_SIZE;
+		n->blocks++;
+		n->bit_pos = inode_indx;
+		n->block_ptrs[0] = main_block;
+		memcpy(n->path,path,64);
+		// n->path = path;
+		
 	    }
 	} else {
             retstat = -3; // error, no more room
