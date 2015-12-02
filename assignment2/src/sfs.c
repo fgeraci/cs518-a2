@@ -243,15 +243,6 @@ void *sfs_init(struct fuse_conn_info *conn)
 		.inodes_table_sector = INODES_TABLE, 
 		.fs_type = 0 
 	};
-
-	if (block_write(SUPER_BLOCK, &superblock) > 0)
-		log_msg("\n\tSUPERBLOCK CREATED\n");
-	
-	if (block_write(INODE_BITMAP, &inds_bitmap) > 0)
-		log_msg("\n\tINODES BITMAP CREATED\n");
-	
-	if (block_write(DATA_BITMAP, &dt_bitmap) > 0)
-		log_msg("\n\tDATA BITMAP CREATED\n");
 	
 	/* Set up first time inodes here */
 	int i;
@@ -295,6 +286,7 @@ void *sfs_init(struct fuse_conn_info *conn)
 			offset -= sizeof(struct inode);
 			log_msg("\n\tCREATED NODE: %d in BLOCK: %d\n",blocks+j,blocks);	
 		}
+		// make the block persistent right here
 		if(block_write(INODES_TABLE+blocks, buffer) <= 0) {
 			log_msg("\n\tFAILED TO CREATE NODES in BLOCK %d\n",blocks);
 			break;
@@ -305,12 +297,18 @@ void *sfs_init(struct fuse_conn_info *conn)
 		}
 		
 	}
-	/* end */
+		
+	if (block_write(SUPER_BLOCK, &superblock) > 0)
+		log_msg("\n\tSUPERBLOCK CREATED\n");
 	
-	// if (block_write(INODES_TABLE, &inds_table) > 0)
-	//	log_msg("\n\tINODES TABLE CREATED - wrote %d nodes\n", i);
+	if (block_write(INODE_BITMAP, &inds_bitmap) > 0)
+		log_msg("\n\tINODES BITMAP CREATED\n");
+	
+	if (block_write(DATA_BITMAP, &dt_bitmap) > 0)
+		log_msg("\n\tDATA BITMAP CREATED\n");
 
     } else {
+
     	log_msg("\n\tSUPERBLOCK FOUND - Reading INODES BITMAP, DATA BITMAP and INODES TABLE\n");
 	
 	uint8_t *buffer = malloc(BLOCK_SIZE*sizeof(uint8_t));
@@ -324,6 +322,7 @@ void *sfs_init(struct fuse_conn_info *conn)
 		memcpy(&dt_bitmap, buffer, sizeof(struct data_bitmap));
 		log_msg("\n\tDATA BITMAP INITIALIZA\n");	
 	}
+
 	memset(buffer,0,BLOCK_SIZE);
 	int i;
 	int j = 0;	// offset of added nodes thus far
@@ -404,14 +403,10 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 	statbuf->st_gid = n->gid;
 	statbuf->st_ctime = n->created;
     } else {
-    	log_msg("\ntmp path is: %s\n",tmp);
+    	/* inode not found, handle here */
+	log_msg("\ninode not found, tmp path is: %s\n",tmp);
      	memset(statbuf,0,sizeof(struct stat));
-	if(strcmp(path,"/") == 0) {
-       	    // lstat(SFS_DATA->diskfile,statbuf);
-	    statbuf->st_mode = S_IFDIR | 0755;
-	    // statbuf->st_ino = 0;
-	    statbuf->st_nlink = 2;
-        }    
+	retstat = -ENOENT;
     }
     log_stat(statbuf); // print returned if any
 
@@ -446,44 +441,23 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	// find a clear inode
 	int inode_indx = get_first_unset_bit(&inds_bitmap.bitmap,inds_bitmap.size);
 	if(inode_indx >= 0) {
-	    
-	    // create stat
-	    struct stat *st = (struct stat*) malloc(sizeof(struct stat));
-	    lstat(path,st);
-	    st->st_ino = 0;
-	    st->st_mode = mode;
-	    st->st_nlink = 0;
-     	    st->st_atime = time(NULL);
-	    st->st_mtime = time(NULL);
-	    st->st_ctime = time(NULL);
-	    
-	    // get node and link the stat
-	    n = &inds_table.table[inode_indx];
-	    // n->st = st;
-            
-	    // write to disk
-            	// find free block
-            	// the main intention is to get the main block to store
-            	// the file's stat
-            int main_block = get_first_unset_bit(&dt_bitmap.bitmap, dt_bitmap.size);
-	    if(main_block < 0) {
-	    	log_msg("\nERROR: disk is full !!!\n");
-		return -3;
- 	    } else {
-    	    	log_msg("\nDEBUG: data block found, ceating file ... \n");
-		// save the file's main block
-		// this is done though the inode, is not needed - block_write(main_block,n->st);
-			
-		// next, update inode for persistency and its block
-		n->inode_id = inode_indx;
-		n->size = BLOCK_SIZE;
-		n->blocks++;
-		n->bit_pos = inode_indx;
-		n->block_ptrs[0] = main_block;
-		memcpy(n->path,path,64);
-		// n->path = path;
+	   
+	    inode_t *node = &inds_table.table[inode_indx]; 		
+	    	    
+	    // populate inode
+	    node->inode_id = inode_indx;;
+	    n->st_mode = mode;
+	    memcpy(n->path,path,64);
+     	    n->created = time(NULL);
+	    n->uid = getuid();
+	    n->gid = getegid();
+	    n->bit_pos = inode_indx;
+	    if(S_ISDIR(mode)) {
+	    	n->is_dir = 1;
+ 	    }
+
+	    // inode created, now what? - TODO complete this 
 		
-	    }
 	} else {
             retstat = -3; // error, no more room
         }	
@@ -619,12 +593,25 @@ int sfs_rmdir(const char *path)
  */
 int sfs_opendir(const char *path, struct fuse_file_info *fi)
 {
-    int retstat = 0;
-    log_msg("\nsfs_opendir(path=\"%s\", fi=0x%08x)\n",
+	int retstat = 0;
+	log_msg("\nsfs_opendir(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
-    
-    
-    return retstat;
+    	DIR *dp;
+
+	inode_t* root = get_inode(path);
+	if(root) {
+     		log_msg("\nDEBUG: root found in opendir with fd: 0x%08x\n", root->inode_id);
+		dp = root->inode_id; // we will treat this as the file handler
+		if(dp) {
+			log_msg("\nDEBUG: opendir - dp assiged: 0x%08x\n", dp);
+			fi->fh = (intptr_t) dp;
+		}
+		else retstat = -ENOENT;	
+	} 
+   
+	log_fi(fi);
+ 
+	return retstat;
 }
 
 /** Read directory
