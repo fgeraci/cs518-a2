@@ -436,7 +436,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     // find the inode in question
     inode_t *n = get_inode((char*)path); 
     if(n) {
-	retstat = -2; // inode taken	
+	retstat = -EEXIST; // inode taken	
     } else {
 	// find a clear inode
 	int inode_indx = get_first_unset_bit(&inds_bitmap.bitmap,inds_bitmap.size);
@@ -451,13 +451,30 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
      	    n->created = time(NULL);
 	    n->uid = getuid();
 	    n->gid = getegid();
+	    n->block_ptrs[0] = block; // mark it as the main block
 	    n->bit_pos = inode_indx;
 	    if(S_ISDIR(mode)) {
 	    	n->is_dir = 1;
  	    }
 
-	    // inode created, now what? - TODO complete this 
-		
+	    // persist inode - make sure not to override another one
+	    char* buffer = (char*) malloc(BLOCK_SIZE);
+	    memset(buffer,0,BLOCK_SIZE);
+	    if(block_read(INODES_TABLE+inode_indx,buffer) > -1) {
+	    	// pick the right portion of the block to write the inode struct
+		int offset = sizeof(struct inode) * (inode_indx % (BLOCK_SIZE/sizeof(struct inode))); 		
+		buffer = buffer+offset; // move the buffer accordingly
+		memcpy(buffer,node,sizeof(struct inode)); // this should NEVER result in garbage
+		// at this point, the buffer will have: whatever it HAD BEFORE this 
+		// operation + the new inode in the right offset
+		if(block_write(INODES_TABLE+inode_indx, buffer) < 0) {
+   			retstat = -EFAULT;
+		} else log_msg("\nDEBUG: INODE %d successfully persisted with offset: %d !!!\n", node->inode_id, offset);
+	    } else {
+	    	retstat = -EFAULT;
+   	    }
+	    
+
 	} else {
             retstat = -3; // error, no more room
         }	
