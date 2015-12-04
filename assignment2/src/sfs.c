@@ -440,22 +440,25 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     } else {
 	// find a clear inode
 	int inode_indx = get_first_unset_bit(&inds_bitmap.bitmap,inds_bitmap.size);
+	log_msg("\nDEBUG: open inode_indx found at: %d, attempting to persist new inode ...\n", inode_indx);
 	if(inode_indx >= 0) {
 	   
 	    inode_t *node = &inds_table.table[inode_indx]; 		
 	    	    
 	    // populate inode
-	    node->inode_id = inode_indx;;
-	    n->st_mode = mode;
-	    memcpy(n->path,path,64);
-     	    n->created = time(NULL);
-	    n->uid = getuid();
-	    n->gid = getegid();
-	    n->block_ptrs[0] = block; // mark it as the main block
-	    n->bit_pos = inode_indx;
+	    node->inode_id = inode_indx;
+	    node->st_mode = mode;
+	    memcpy(node->path,path,64);
+     	    node->created = time(NULL);
+	    node->uid = getuid();
+	    node->gid = getegid();
+	    node->block_ptrs[0] = block; // mark it as the main block
+	    node->bit_pos = inode_indx;
 	    if(S_ISDIR(mode)) {
 	    	n->is_dir = 1;
  	    }
+
+	    log_msg("\nDEBUG: inode created !!! inode_id: %d, with path: %s\n", node->inode_id, node->path);
 
 	    // persist inode - make sure not to override another one
 	    char* buffer = (char*) malloc(BLOCK_SIZE);
