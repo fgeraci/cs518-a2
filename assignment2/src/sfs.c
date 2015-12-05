@@ -695,25 +695,20 @@ int sfs_rmdir(const char *path)
  */
 int sfs_opendir(const char *path, struct fuse_file_info *fi)
 {
-	int retstat = 0;
 	log_msg("\nsfs_opendir(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
-    	DIR *dp;
-
+    	
+	// if the inode exists, return OK
+	
 	inode_t* root = get_inode(path);
 	if(root) {
      		log_msg("\nDEBUG: root found in opendir with fd: 0x%08x\n", root->inode_id);
-		dp = root->inode_id; // we will treat this as the file handler
-		if(dp) {
-			log_msg("\nDEBUG: opendir - dp assiged: 0x%08x\n", dp);
-			fi->fh = (intptr_t) dp;
-		}
-		else retstat = -ENOENT;	
-	} 
+	
+	} else return -ENOENT;	 
    
 	log_fi(fi);
  
-	return retstat;
+	return 0;
 }
 
 /** Read directory
@@ -741,7 +736,10 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 	       struct fuse_file_info *fi)
 {
     int retstat = 0;
-    
+	log_msg("\nDEBUG: Attempting to readdir: %s ...\n", path);
+	
+	filler(buf, ".", NULL, 0);
+	filler(buf, "..", NULL, 0);    
     
     return retstat;
 }
