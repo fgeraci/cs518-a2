@@ -177,19 +177,20 @@ void save_data_bitmap(unsigned char* ptr) {
 
 void update_inode(inode_t* n) {		
 	int indx = n->inode_id; // corresponds to the bit_index as well.
+	int blockId = (int)(indx/(BLOCK_SIZE/sizeof(struct inode)));
 	char* buffer = (char*) malloc(BLOCK_SIZE);
 	memset(buffer,0,BLOCK_SIZE);
-	if(block_read(INODES_TABLE+indx,buffer) > -1) {
+	if(block_read(INODES_TABLE+blockId,buffer) > -1) {
 		// pick the right portion of the block to write the inode struct
 		int offset = sizeof(struct inode) * (indx % (BLOCK_SIZE/sizeof(struct inode))); 		
-		buffer = buffer+offset; // move the buffer accordingly
-		memcpy(buffer,n,sizeof(struct inode)); // this should NEVER result in garbage
+		//buffer = buffer+offset; // move the buffer accordingly
+		memcpy(buffer+offset,n,sizeof(struct inode)); // this should NEVER result in garbage
 		// at this point, the buffer will have: whatever it HAD BEFORE this 
 		// operation + the new inode in the right offset
-		if(block_write(INODES_TABLE+indx, buffer) < 0) {
+		if(block_write(INODES_TABLE+blockId, buffer) < 0) {
   	 		log_msg("\nDEBUG: FATAL, couldn't update inode in disk\n");
 		} else {
-			log_msg("\nDEBUG: INODE %d successfully updated with offset: %d !!!\n", n->inode_id, offset);
+			log_msg("\nDEBUG: INODE %d successfully updated in block: %d with offset: %d !!!\n",n->inode_id,blockId,offset);
 		}
 	} else {
 		log_msg("\nDEBUG: FATAL: could not read block: %d from INODES_TABLE disk file\n", indx);
@@ -360,6 +361,9 @@ void *sfs_init(struct fuse_conn_info *conn)
 		memset(buffer,0,BLOCK_SIZE);
 		log_msg("\n\tINODES BITMAP READ\n");
 	}
+
+	memset(buffer,0,BLOCK_SIZE);
+
 	if(block_read(DATA_BITMAP, buffer) > 0 ) {
 		memcpy(&dt_bitmap, buffer, sizeof(struct data_bitmap));
 		log_msg("\n\tDATA BITMAP INITIALIZA\n");	
@@ -367,19 +371,18 @@ void *sfs_init(struct fuse_conn_info *conn)
 
 	memset(buffer,0,BLOCK_SIZE);
 	int i;
-	int j = 0;	// offset of added nodes thus far
 	inode_t curr; // = (struct inode*)malloc(sizeof(struct inode));
 	for(i = 0; i < INODE_BLOCKS; i++) {	
 		int offset = BLOCK_SIZE;
 		if(block_read(INODES_TABLE + i, buffer) > 0) {				// all blocks should be full
 			while(offset > 0 && offset >= sizeof(struct inode)) {		// there is something less
 				// the buffer has two inodes now			// and no remainder - if so, problem!
-				log_msg("\n\tAttempting load INODE: %d\n",i+j);
-				memcpy(&curr,(buffer+(BLOCK_SIZE-offset)),sizeof(struct inode));
-				inds_table.table[j+i] = curr;				// put it in the table
+				memcpy(&curr,(buffer+(BLOCK_SIZE-offset)),sizeof(struct inode));	
+				int pos = (int) curr.inode_id % (BLOCK_SIZE/(sizeof(struct inode)));
+				log_msg("\n\tAttempting load INODE in block %d, position: %d\n",i, pos);
+				inds_table.table[curr.inode_id] = curr;				// put it in the table
 				// sanity for debugging
-				log_msg("\n\tINODE: %d successfully loaded - with path: %s \n", inds_table.table[i+j].inode_id, inds_table.table[i+j].path);	
-				j++;
+				log_msg("\n\tINODE: %d successfully loaded - with path: %s \n", curr.inode_id, curr.path);	
 				memset(&curr,0,sizeof(struct inode));
 				offset -= sizeof(struct inode);				// this assumes sizeof(inode)	
 				log_msg("\n\tDEBUG: Buffer will be moved %d bytes", BLOCK_SIZE-offset);
@@ -387,10 +390,11 @@ void *sfs_init(struct fuse_conn_info *conn)
 											// is a divisor of BLOCK_SIZE
 			}
 			memset(buffer,0,BLOCK_SIZE);					// re initialize buffer
-			--j;
 		} else {
 			log_msg("\n\t *** FATAL: couldn't retrieve inode table from block: %d *** \n", INODES_TABLE+i);
-		}								
+		}
+		log_msg("\nDEBUG: BLOCK FINISHED LOADING: %d\n",i);								
+		memset(&curr,0,sizeof(struct inode));
 	}
 	log_msg("\n\tINODES TABLE INITIALIZED\n");		
     }
@@ -737,10 +741,10 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 {
     int retstat = 0;
 	log_msg("\nDEBUG: Attempting to readdir: %s ...\n", path);
-	
+		
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);    
-    
+
     return retstat;
 }
 
