@@ -51,6 +51,7 @@
 #define INODE_BITMAP		1
 #define DATA_BITMAP		2
 #define INODES_TABLE		3
+#define BASE_DATA_BLOCK	4
 
 #define BLOCK_ADDRESS(indx)	(BLOCK_SIZE*indx)
 
@@ -139,7 +140,7 @@ int is_bit_set(unsigned char *map, int position) {
 
 /* Returns index position OR -1 is all FULL */
 
-int get_first_unset_bit(unsigned char *map, int length) { 
+int get_first_unset_bit(unsigned char* map, int length) { 
 	int i, j;
 	for (i = 0; i < length; i++) {
 		for (j = 1; j <= 8; j++) {
@@ -153,6 +154,47 @@ int get_first_unset_bit(unsigned char *map, int length) {
 }
 
 void get_full_path(char *path); 
+
+// saving single block bitmap
+// after creating inodes or data blocks
+// having two functions is stupid though, but I might need this for now
+
+void save_inodes_bitmap(unsigned char* ptr) {
+	if(block_write(INODE_BITMAP,ptr) > 0) {
+		log_msg("\nDEBUG: inodes_bitmap successfully updated on disk\n");
+	} else {
+		log_msg("\nDEBUG: Failed to save inodes_bitmap into disk\n");
+	}	
+}
+
+void save_data_bitmap(unsigned char* ptr) {
+	if(block_write(DATA_BITMAP,ptr) > 0) {
+		log_msg("\nDEBUG: data_bitmap successfully updated on disk\n");
+	} else {
+		log_msg("\nDEBUG: Failed to save data_bitmap into disk\n");
+	}
+}
+
+void update_inode(inode_t* n) {		
+	int indx = n->inode_id; // corresponds to the bit_index as well.
+	char* buffer = (char*) malloc(BLOCK_SIZE);
+	memset(buffer,0,BLOCK_SIZE);
+	if(block_read(INODES_TABLE+indx,buffer) > -1) {
+		// pick the right portion of the block to write the inode struct
+		int offset = sizeof(struct inode) * (indx % (BLOCK_SIZE/sizeof(struct inode))); 		
+		buffer = buffer+offset; // move the buffer accordingly
+		memcpy(buffer,n,sizeof(struct inode)); // this should NEVER result in garbage
+		// at this point, the buffer will have: whatever it HAD BEFORE this 
+		// operation + the new inode in the right offset
+		if(block_write(INODES_TABLE+indx, buffer) < 0) {
+  	 		log_msg("\nDEBUG: FATAL, couldn't update inode in disk\n");
+		} else {
+			log_msg("\nDEBUG: INODE %d successfully updated with offset: %d !!!\n", n->inode_id, offset);
+		}
+	} else {
+		log_msg("\nDEBUG: FATAL: could not read block: %d from INODES_TABLE disk file\n", indx);
+	}
+}
 
 /* end Util */
 
@@ -179,7 +221,7 @@ struct inodes_bitmap inds_bitmap;
 struct data_bitmap dt_bitmap;
 
 
-struct inode *get_inode(char *path) {
+struct inode *get_inode(const char *path) {
 	int i;
 	log_msg("\nDEBUG: Looking for inode with path: %s\n", path);
 	for(i = 0; i < MAX_INODES; ++i) {
@@ -452,7 +494,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
      	    node->created = time(NULL);
 	    node->uid = getuid();
 	    node->gid = getegid();
-	    node->block_ptrs[0] = block; // mark it as the main block
+	    node->block_ptrs[0] = block; // mark it as the main block - reserve it
 	    node->bit_pos = inode_indx;
 	    if(S_ISDIR(mode)) {
 	    	n->is_dir = 1;
@@ -472,12 +514,16 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		// operation + the new inode in the right offset
 		if(block_write(INODES_TABLE+inode_indx, buffer) < 0) {
    			retstat = -EFAULT;
-		} else log_msg("\nDEBUG: INODE %d successfully persisted with offset: %d !!!\n", node->inode_id, offset);
+		} else {
+			log_msg("\nDEBUG: INODE %d successfully persisted with offset: %d !!!\n", node->inode_id, offset);
+			set_bit(&inds_bitmap.bitmap,inode_indx);	
+			// write bitmap to disk
+			save_inodes_bitmap(&inds_bitmap);
+		}
 	    } else {
 	    	retstat = -EFAULT;
    	    }
 	    
-
 	} else {
             retstat = -3; // error, no more room
         }	
@@ -571,12 +617,48 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 	     struct fuse_file_info *fi)
 {
-    int retstat = 0;
-    log_msg("\nsfs_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+    	int retstat = 0;
+    	log_msg("\nsfs_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
+	log_msg("\nDEBUG: in write, buffer string is: %s\n",buf);
     
-    
-    return retstat;
+	/* handle block wirtting here */ 
+	if(size > 0) {
+		// find the owner node
+	   	inode_t *node = get_inode(path);
+
+		// get the main block
+		int first_block = node->block_ptrs[0];
+		if(first_block >= 0) {
+			if(size <= BLOCK_SIZE) {
+				log_msg("\nDEBUG: single block size - attempting to write %d bytes for buffer %s in block: BASE_DATA_BLOCK+offset(%d)", size, buf, BASE_DATA_BLOCK+first_block);	
+				// TODO - handle offset param
+				// handle single block writes here
+				if(block_write(BASE_DATA_BLOCK+first_block,buf) >= size) {
+					
+					log_msg("\nDEBUG: block: %d successfully written for file: %s with buffer: %s\n",first_block,path,buf);
+					set_bit(&dt_bitmap,first_block);
+					node->size = size;
+					node->created = time(NULL);
+					node->modified = time(NULL);
+					
+					// save data bitmap
+					save_data_bitmap(&dt_bitmap.bitmap);
+					// update inodes table
+					update_inode(node);
+					fi->fh = node->inode_id;
+					log_fi(fi);
+
+					/* AT THIS POINT < INODE (update), BITMAP (updated), BLOCK (WRITTEN) */
+				}	
+			} 		
+		} else {
+			log_msg("\nDEBUG: No blocks available ... exiting sfs_write for inode: %s\n", path);
+			return -EIO;
+		} 
+	} else log_msg("\nDEBUG: Nothing to write to disk for inode: %s\n",path);
+
+ 	return retstat;
 }
 
 
