@@ -51,7 +51,7 @@
 #define INODE_BITMAP		1
 #define DATA_BITMAP		2
 #define INODES_TABLE		3
-#define BASE_DATA_BLOCK	4
+#define BASE_DATA_BLOCK		(MAX_INODES + 4)
 
 #define BLOCK_ADDRESS(indx)	(BLOCK_SIZE*indx)
 
@@ -187,6 +187,7 @@ void update_inode(inode_t* n) {
 		memcpy(buffer+offset,n,sizeof(struct inode)); // this should NEVER result in garbage
 		// at this point, the buffer will have: whatever it HAD BEFORE this 
 		// operation + the new inode in the right offset
+		
 		if(block_write(INODES_TABLE+blockId, buffer) < 0) {
   	 		log_msg("\nDEBUG: FATAL, couldn't update inode in disk\n");
 		} else {
@@ -325,9 +326,9 @@ void *sfs_init(struct fuse_conn_info *conn)
 		int offset = BLOCK_SIZE;
 		while(offset > 0 && offset >= sizeof(struct inode)) {
 			memcpy((buffer+(BLOCK_SIZE-offset)), &inds_table.table[blocks+j], sizeof(struct inode));
-			j++;
 			offset -= sizeof(struct inode);
-			log_msg("\n\tCREATED NODE: %d in BLOCK: %d\n",blocks+j,blocks);	
+			log_msg("\n\tCREATED NODE: %d in BLOCK: %d with index: %d\n",blocks+j,blocks,inds_table.table[blocks+j].inode_id);	
+			j++;
 		}
 		// make the block persistent right here
 		if(block_write(INODES_TABLE+blocks, buffer) <= 0) {
@@ -379,8 +380,9 @@ void *sfs_init(struct fuse_conn_info *conn)
 				// the buffer has two inodes now			// and no remainder - if so, problem!
 				memcpy(&curr,(buffer+(BLOCK_SIZE-offset)),sizeof(struct inode));	
 				int pos = (int) curr.inode_id % (BLOCK_SIZE/(sizeof(struct inode)));
-				log_msg("\n\tAttempting load INODE in block %d, position: %d\n",i, pos);
-				inds_table.table[curr.inode_id] = curr;				// put it in the table
+				log_msg("\n\tAttempting to load INODE (id: %d) in block %d, position: %d\n",curr.inode_id, i, pos);
+				inds_table.table[curr.inode_id] = curr;			// put it in the table
+				
 				// sanity for debugging
 				log_msg("\n\tINODE: %d successfully loaded - with path: %s \n", curr.inode_id, curr.path);	
 				memset(&curr,0,sizeof(struct inode));
@@ -509,17 +511,22 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	    // persist inode - make sure not to override another one
 	    char* buffer = (char*) malloc(BLOCK_SIZE);
 	    memset(buffer,0,BLOCK_SIZE);
-	    if(block_read(INODES_TABLE+inode_indx,buffer) > -1) {
-	    	// pick the right portion of the block to write the inode struct
+		
+	    int blockId = (int) (inode_indx / (BLOCK_SIZE/sizeof(struct inode)));
+	    
+	    if(block_read(INODES_TABLE+blockId,buffer) > -1) {
+	    	
+  		// pick the right portion of the block to write the inode struct
 		int offset = sizeof(struct inode) * (inode_indx % (BLOCK_SIZE/sizeof(struct inode))); 		
-		buffer = buffer+offset; // move the buffer accordingly
-		memcpy(buffer,node,sizeof(struct inode)); // this should NEVER result in garbage
+		
+		memcpy(buffer+offset,node,sizeof(struct inode)); // this should NEVER result in garbage
 		// at this point, the buffer will have: whatever it HAD BEFORE this 
 		// operation + the new inode in the right offset
-		if(block_write(INODES_TABLE+inode_indx, buffer) < 0) {
+			
+		if(block_write(INODES_TABLE+blockId, buffer) < 0) {
    			retstat = -EFAULT;
 		} else {
-			log_msg("\nDEBUG: INODE %d successfully persisted with offset: %d !!!\n", node->inode_id, offset);
+			log_msg("\nDEBUG: INODE %d successfully persisted in block: %d, with offset: %d !!!\n", node->inode_id, blockId, offset);
 			set_bit(&inds_bitmap.bitmap,inode_indx);	
 			// write bitmap to disk
 			save_inodes_bitmap(&inds_bitmap);
@@ -529,7 +536,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
    	    }
 	    
 	} else {
-            retstat = -3; // error, no more room
+            retstat = -EFAULT; // error, no more room
         }	
     }
     return retstat;
@@ -638,6 +645,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 				log_msg("\nDEBUG: single block size - attempting to write %d bytes for buffer %s in block: BASE_DATA_BLOCK+offset(%d)", size, buf, BASE_DATA_BLOCK+first_block);	
 				// TODO - handle offset param
 				// handle single block writes here
+				
 				if(block_write(BASE_DATA_BLOCK+first_block,buf) >= size) {
 					
 					log_msg("\nDEBUG: block: %d successfully written for file: %s with buffer: %s\n",first_block,path,buf);
@@ -650,10 +658,8 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 					save_data_bitmap(&dt_bitmap.bitmap);
 					// update inodes table
 					update_inode(node);
-					fi->fh = node->inode_id;
-					log_fi(fi);
 
-					/* AT THIS POINT < INODE (update), BITMAP (updated), BLOCK (WRITTEN) */
+					// AT THIS POINT < INODE (update), BITMAP (updated), BLOCK (WRITTEN) 
 				}	
 			} 		
 		} else {
