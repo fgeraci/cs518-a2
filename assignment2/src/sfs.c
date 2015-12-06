@@ -236,14 +236,22 @@ char* get_parent(char* path) {
 }
 
 char* get_relative_path(char* path) {
- 	int i, len = strlen(path), add = 0;
-       char* c = (char*) malloc(strlen(path));
-       for(i = len; i >= 0; i--) {
-               if(path[i] == '/') add = 1;
-               if(add) c[i] = path[i];
-               else c[i] = '\0';
-       }
-       return c;
+
+	int i,j, rel_len = 0, len = strlen(path);
+        for(i = len; i >= 0; i--) {
+		rel_len++;
+        	if(path[i] == '/') break;
+        }
+
+	char* c = (char*) malloc(rel_len);
+	for(j = 0; j < rel_len; j++) {
+		c[j] = path[len-rel_len+1+j];
+	}
+
+	c[j] = '\0';
+	log_msg("\nDEBUG: relative path of %s is %s\n",c,path);
+
+	return c+1;
 
 }
 
@@ -796,7 +804,7 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
                                 s->st_ctime = n->created;
                                 s->st_mtime = n->modified;
                                 s->st_atime = n->last_accessed;
-                                filler(buf,n->path,s,0);
+                                filler(buf,get_relative_path(n->path),NULL,0);
                        }
                 }
         }
