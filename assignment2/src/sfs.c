@@ -564,12 +564,10 @@ int sfs_unlink(const char *path)
  */
 int sfs_open(const char *path, struct fuse_file_info *fi)
 {
-    int retstat = 0;
     log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
-
-    
-    return retstat;
+   
+    return 0;
 }
 
 /** Release an open file
@@ -588,12 +586,14 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
  */
 int sfs_release(const char *path, struct fuse_file_info *fi)
 {
-    int retstat = 0;
-    log_msg("\nsfs_release(path=\"%s\", fi=0x%08x)\n",
+	int retstat = 0;
+	log_msg("\nsfs_release(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
     
+	log_fi(fi);  
+	retstat = close(fi->fh);
 
-    return retstat;
+    	return retstat;
 }
 
 /** Read data from an open file
@@ -658,7 +658,8 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 					save_data_bitmap(&dt_bitmap.bitmap);
 					// update inodes table
 					update_inode(node);
-
+					retstat = size;
+					
 					// AT THIS POINT < INODE (update), BITMAP (updated), BLOCK (WRITTEN) 
 				}	
 			} 		
@@ -760,10 +761,9 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
  */
 int sfs_releasedir(const char *path, struct fuse_file_info *fi)
 {
-    int retstat = 0;
-
-    
-    return retstat;
+	
+	log_msg("\nDEBUG: releasing %s ... \n",path); 
+    	return 0;
 }
 
 struct fuse_operations sfs_oper = {
