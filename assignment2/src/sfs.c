@@ -38,7 +38,7 @@
 
 #define TOTAL_DISK_BLOCKS	1024 // random initial value - 512 kb
 #define INODE_BLOCKS		64   // total possible nodes blocks, initially
-#define MAX_PATH		128  // longest name in bytes
+#define MAX_PATH		64  // longest name in bytes
 
 #define DISK_FILE_SIZE		(TOTAL_DISK_BLOCKS*BLOCK_SIZE)
 #define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
@@ -54,6 +54,8 @@
 #define BASE_DATA_BLOCK		(MAX_INODES + 4)
 
 #define BLOCK_ADDRESS(indx)	(BLOCK_SIZE*indx)
+
+#define BLOCK_PTRS_MAX		15
 
 	// TODO - DONE - ensure well-rounded inode size values though - pref. 256 b per inode for 256 inodes total (64*512b)/256	 
 
@@ -78,9 +80,9 @@ struct inode {
 	int blocks;
 	int uid, gid;
 	int bit_pos;
-	unsigned int block_ptrs[15];
+	unsigned int block_ptrs[BLOCK_PTRS_MAX];
 	inode_t *next, *prev;		// handle overflow
-	unsigned char path[64];
+	unsigned char path[MAX_PATH];
 	int is_dir;		// confirm this is indeed 64 byes (allignment)
 	unsigned int padding[13];	// this pushes the struct to 256 bytes for now	
 };
@@ -222,6 +224,28 @@ struct inodes_table inds_table;
 struct inodes_bitmap inds_bitmap;
 struct data_bitmap dt_bitmap;
 
+char* get_parent(char* path) {
+       int i, len = strlen(path), add = 0;
+       char* c = (char*) malloc(strlen(path));
+       for(i = len; i >= 0; i--) {
+               if(path[i] == '/') add = 1;
+               if(add) c[i] = path[i];
+               else c[i] = '\0';
+       }
+       return c;
+}
+
+char* get_relative_path(char* path) {
+ 	int i, len = strlen(path), add = 0;
+       char* c = (char*) malloc(strlen(path));
+       for(i = len; i >= 0; i--) {
+               if(path[i] == '/') add = 1;
+               if(add) c[i] = path[i];
+               else c[i] = '\0';
+       }
+       return c;
+
+}
 
 struct inode *get_inode(const char *path) {
 	int i;
@@ -505,8 +529,8 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	    if(S_ISDIR(mode)) {
 	    	n->is_dir = 1;
  	    }
-
-	    log_msg("\nDEBUG: inode created !!! inode_id: %d, with path: %s\n", node->inode_id, node->path);
+	
+	    log_msg("\nDEBUG: inode created with PARENT (%s) !!! inode_id: %d, with path: %s\n", get_parent(path), node->inode_id, node->path);
 
 	    // persist inode - make sure not to override another one
 	    char* buffer = (char*) malloc(BLOCK_SIZE);
@@ -590,8 +614,8 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
 	log_msg("\nsfs_release(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
     
-	log_fi(fi);  
-	retstat = close(fi->fh);
+	// log_fi(fi);  
+	// retstat = close(fi->fh);
 
     	return retstat;
 }
@@ -746,13 +770,38 @@ int sfs_opendir(const char *path, struct fuse_file_info *fi)
 int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,
 	       struct fuse_file_info *fi)
 {
-    int retstat = 0;
+	int retstat = 0;
 	log_msg("\nDEBUG: Attempting to readdir: %s ...\n", path);
 		
 	filler(buf, ".", NULL, 0);
 	filler(buf, "..", NULL, 0);    
+	
 
-    return retstat;
+ 	/* Find nodes and fill buffer up - brute force it - brandead to make ti work, then I will optimize etc ... */
+        int i;
+        for(i = 0; i < MAX_INODES; i++) {
+	        if(is_bit_set(&inds_bitmap.bitmap,i)) {
+                	inode_t* n = &inds_table.table[i];
+                        if(strcmp(get_parent(n->path), path) == 0 
+				&& strcmp(n->path,path) != 0) { // find children not equal to self
+                        	// is child!
+                                log_msg("\n\tDEBUG: inode (%s) is child\n",n->path);
+                                struct stat* s = (struct stat*) malloc(sizeof(struct stat));
+                                memset(s,0,sizeof(struct stat));
+                                s->st_uid = n->uid;
+                                s->st_gid = n->gid;
+                                s->st_ino = n->inode_id;
+                                s->st_mode = n->st_mode;
+                                s->st_size = n->size;
+                                s->st_ctime = n->created;
+                                s->st_mtime = n->modified;
+                                s->st_atime = n->last_accessed;
+                                filler(buf,n->path,s,0);
+                       }
+                }
+        }
+
+	return retstat;
 }
 
 /** Release directory
