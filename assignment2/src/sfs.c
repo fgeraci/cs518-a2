@@ -161,7 +161,7 @@ void get_full_path(char *path);
 // after creating inodes or data blocks
 // having two functions is stupid though, but I might need this for now
 
-void save_inodes_bitmap(unsigned char* ptr) {
+void save_inodes_bitmap(void* ptr) {
 	if(block_write(INODE_BITMAP,ptr) > 0) {
 		log_msg("\nDEBUG: inodes_bitmap successfully updated on disk\n");
 	} else {
@@ -646,7 +646,7 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
  */
 int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-    	log_msg("\nsfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+    	log_msg("\nsfs_read(path=\"%s\", buf=%s, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
 	
 	inode_t *n = get_inode(path);
@@ -657,10 +657,8 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 			log_msg("\nDEBUG: Attempting to read data block: BASE+index (%d)\n",(BASE_DATA_BLOCK+n->block_ptrs[0]));
 			char* tmp_buf = (char*) malloc(size);
 			if(block_read((BASE_DATA_BLOCK + n->block_ptrs[0]),tmp_buf) > -1) {
-				log_msg("\nDEBUG: copying buffer: %s\n", tmp_buf);
 				memcpy(buf,tmp_buf,size);
-				size = n->size;
-				memset(buf,'a',size);
+				log_msg("\nDEBUG: copying size:%d, buffer:%s from original buffer: %s\n",size, buf, tmp_buf);
 			} else log_msg("\nDEBUG: Failed to read file ... \n");
 		} else {
 			// TODO - implement handle multiblock reads
@@ -703,13 +701,13 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 				
 				if(block_write(BASE_DATA_BLOCK+first_block,buf) >= size) {
 					
-					log_msg("\nDEBUG: block: %d successfully written for file: %s with buffer: %s\n",first_block,path,buf);
 					set_bit(&dt_bitmap,first_block);
 					node->size = size;
 					node->block_ptrs[0] = first_block;
 					node->created = time(NULL);
 					node->modified = time(NULL);
 					
+					log_msg("\nDEBUG: block: %d successfully written for file: %s with size:%d, buffer:%s\n",first_block,path,size,buf);
 					// save data bitmap
 					save_data_bitmap(&dt_bitmap.bitmap);
 					// update inodes table
@@ -732,12 +730,34 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 /** Create a directory */
 int sfs_mkdir(const char *path, mode_t mode)
 {
-    int retstat = 0;
-    log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
+    	log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
 	    path, mode);
    
-    
-    return retstat;
+	time_t t = time(NULL);
+	int uid = getuid();
+	int gid = getegid();
+	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, inds_bitmap.size);
+	
+	if(firstBit > -1) {
+		set_bit(&inds_bitmap.bitmap,firstBit);	
+		inds_table.table[firstBit].bit_pos = firstBit;		// each inode will keep track of its bitmap
+		memcpy(&inds_table.table[firstBit].path, path, strlen(path));	// set inode 0 as root by default			
+		inode_t* n = &inds_table.table[firstBit];
+		n->st_mode = S_IFDIR | mode;
+		n->inode_id = firstBit;
+		n->size = 0;
+		n->created = t;
+		n->links_count = 2; // at least . and ..
+		n->blocks = 0;
+		n->uid = uid;
+		n->gid = gid;
+		n->is_dir = 1;
+		save_inodes_bitmap(&inds_bitmap);
+		update_inode(n);
+		log_msg("DEBUG: New DIRECTORY created: %s\n",path);
+    	} else return -ENOENT;
+
+    	return 0;
 }
 
 
