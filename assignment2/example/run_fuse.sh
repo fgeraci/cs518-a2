@@ -1,9 +1,11 @@
 fusermount -u mountdir;
 DISK="virtual_disk"
+pdir=$(pwd);
+echo "Working on ... $pdir"
 cd ..
 make
 cd example
 if [ ! -e "$DISK" ]; then
 	touch "$DISK"
 fi 
-../src/sfs /ilab/users/fgeraci/Development/CS518/A2/assignment2/example/$DISK mountdir
+../src/sfs $pdir/$DISK mountdir
