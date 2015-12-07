@@ -228,12 +228,15 @@ char* get_parent(char* path) {
        	int i, len = strlen(path), tot_len = 0;
 	if(len == 1) return path; // root special case
        	for(i = len-1; i >= 0; i--) {
-               if(path[i] == '/') tot_len = i;
+               if(path[i] == '/') { 
+			tot_len = i; 
+			break;  
+		}
        	}
 	if(tot_len == 0) tot_len++; // compensate for root case
-       	char* c = (char*) malloc(tot_len);
-	memcpy(c,path,tot_len);
-       	log_msg("\nDEBUG: parent of %s is %s", path,c);
+       	char c[MAX_PATH] = { 0 };
+	strncpy(c,path,tot_len);
+       	log_msg("\nDEBUG: parent of %s is %s\n", path,c);
 	return c;
 }
 
