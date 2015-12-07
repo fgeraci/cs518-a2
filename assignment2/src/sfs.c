@@ -162,19 +162,27 @@ void get_full_path(char *path);
 // having two functions is stupid though, but I might need this for now
 
 void save_inodes_bitmap(unsigned char* ptr) {
-	if(block_write(INODE_BITMAP,ptr) > 0) {
+	uint8_t *buf = (uint8_t*) malloc(BLOCK_SIZE);
+	block_read(INODE_BITMAP, buf);
+	memcpy(buf,ptr, sizeof(struct inodes_bitmap));
+	if(block_write(INODE_BITMAP,buf) > 0) {
 		log_msg("\nDEBUG: inodes_bitmap successfully updated on disk\n");
 	} else {
 		log_msg("\nDEBUG: Failed to save inodes_bitmap into disk\n");
-	}	
+	}
+	free(buf);	
 }
 
 void save_data_bitmap(unsigned char* ptr) {
+	uint8_t *buf = (uint8_t*) malloc(BLOCK_SIZE);
+	block_read(DATA_BITMAP, buf);
+	memcpy(buf,ptr, sizeof(struct data_bitmap));
 	if(block_write(DATA_BITMAP,ptr) > 0) {
 		log_msg("\nDEBUG: data_bitmap successfully updated on disk\n");
 	} else {
 		log_msg("\nDEBUG: Failed to save data_bitmap into disk\n");
 	}
+	free(buf);
 }
 
 void update_inode(inode_t* n) {		
@@ -577,11 +585,31 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 /** Remove a file */
 int sfs_unlink(const char *path)
 {
-    int retstat = 0;
-    log_msg("sfs_unlink(path=\"%s\")\n", path);
+	int retstat = 0;
+	inode_t *n = get_inode(path);
+	if(n) {
+		log_msg("\nDEBUG: inode (%s) found for deletion ... \n",path);
+		if(n->is_dir) return -EISDIR;
+		
+		// clear field
+		memset(n->path,0,MAX_PATH);
+		n->size = 0;
+		int j;
+		
+		// free memory
+		for(j = 0; j < BLOCK_PTRS_MAX; ++j) {
+			unset_bit(&dt_bitmap.bitmap,n->block_ptrs[j]);
+		}
 
-    
-    return retstat;
+		// free inode
+		unset_bit(&inds_bitmap.bitmap,n->inode_id);
+		
+		// update structs
+		save_inodes_bitmap(&inds_bitmap);
+		save_data_bitmap(&dt_bitmap);	
+		update_inode(n);
+	}
+ 	return retstat;   
 }
 
 /** File open operation
@@ -687,7 +715,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 					node->modified = time(NULL);
 					
 					// save data bitmap
-					save_data_bitmap(&dt_bitmap.bitmap);
+					save_data_bitmap(&dt_bitmap);
 					// update inodes table
 					update_inode(node);
 					retstat = size;
