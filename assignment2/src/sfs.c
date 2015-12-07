@@ -705,12 +705,35 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 /** Create a directory */
 int sfs_mkdir(const char *path, mode_t mode)
 {
-    int retstat = 0;
-    log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
-	    path, mode);
-   
-    
-    return retstat;
+	int retstat = 0;
+        log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
+            path, mode);
+        time_t t = time(NULL);
+        int uid = getuid();
+        int gid = getegid();
+        int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, inds_bitmap.size);
+        if(firstBit > -1) {
+                inode_t* n = &inds_table.table[firstBit];
+                set_bit(&inds_bitmap.bitmap,firstBit);
+                n->bit_pos = firstBit;          // each inode will keep track of its bitmap
+                memcpy(n->path, path, strlen(path));   // set inode 0 as root by default                       
+                n->st_mode = S_IFDIR | mode;
+                n->inode_id = firstBit;
+                n->size = 0;
+                n->created = t;
+                n->links_count = 2; // at least . and ..
+                n->blocks = 0;
+                n->uid = uid;
+                n->gid = gid;
+                n->is_dir = 1;
+                save_inodes_bitmap(&inds_bitmap);
+                update_inode(n);
+                log_msg("DEBUG: New DIRECTORY created: %s\n",path);
+        } else return -ENOENT;
+
+        return 0;
+
+    return retstat;   
 }
 
 
