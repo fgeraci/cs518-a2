@@ -677,15 +677,14 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 	if(n) {
 		log_msg("\nDEBUG: reading for file: %s\n",path);
 		int total_size = n->size;
-		int total_blocks = ceil(n->size/BLOCK_SIZE);
+		int total_blocks = ceil(total_size/BLOCK_SIZE);
 		if (n->size <= BLOCK_SIZE) {
 			log_msg("\nDEBUG: Attempting to read data block: BASE+index (%d)\n",(BASE_DATA_BLOCK+n->block_ptrs[0]));
 			char* tmp_buf = (char*) malloc(size);
 			if(block_read((BASE_DATA_BLOCK + n->block_ptrs[0]),tmp_buf) > -1) {
 				log_msg("\nDEBUG: copying buffer: %s\n", tmp_buf);
-				memcpy(buf,tmp_buf,size);
+				memcpy(buf,tmp_buf+offset,size);
 				size = n->size;
-				memset(buf,'a',size);
 			} else log_msg("\nDEBUG: Failed to read file ... \n");
 		} else if (total_blocks <= BLOCK_PTRS_MAX ){
 			// TODO - implement handle multiblock reads - this should be easily done upstairs, quick n diry though
@@ -695,9 +694,10 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 	} else {
 		return -EBADF; 
 	}
-   
+  	log_msg("\nDEBUG: sfs_read() exit with size: %d, and buffer: %s\n",size,buf); 
     	return retstat;
 }
+
 
 /** Write data to an open file
  *
@@ -719,7 +719,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 	if(size > 0) {
 		// find the owner node
 	   	inode_t *node = get_inode(path);
-
+		int tot_blocks = ceil(size/BLOCK_SIZE);
 		// get the main block
 		int first_block = node->block_ptrs[0];
 		if(first_block >= 0) {
@@ -744,6 +744,8 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 					
 					// AT THIS POINT < INODE (update), BITMAP (updated), BLOCK (WRITTEN) 
 				}	
+			} else {
+				// overflow here with indirection
 			} 		
 		} else {
 			log_msg("\nDEBUG: No blocks available ... exiting sfs_write for inode: %s\n", path);
