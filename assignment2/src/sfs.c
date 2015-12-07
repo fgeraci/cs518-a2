@@ -161,7 +161,7 @@ void get_full_path(char *path);
 // after creating inodes or data blocks
 // having two functions is stupid though, but I might need this for now
 
-void save_inodes_bitmap(struct inodes_bitmap* ptr) {
+void save_inodes_bitmap(unsigned char* ptr) {
 	if(block_write(INODE_BITMAP,ptr) > 0) {
 		log_msg("\nDEBUG: inodes_bitmap successfully updated on disk\n");
 	} else {
@@ -169,7 +169,7 @@ void save_inodes_bitmap(struct inodes_bitmap* ptr) {
 	}	
 }
 
-void save_data_bitmap(struct data_bitmap* ptr) {
+void save_data_bitmap(unsigned char* ptr) {
 	if(block_write(DATA_BITMAP,ptr) > 0) {
 		log_msg("\nDEBUG: data_bitmap successfully updated on disk\n");
 	} else {
@@ -225,41 +225,28 @@ struct inodes_bitmap inds_bitmap;
 struct data_bitmap dt_bitmap;
 
 char* get_parent(char* path) {
-       	int i, len = strlen(path), tot_len = 0,add = 0;
-	
-	if(len == 1) return path; // root special case
-       
-	char* c = (char*) malloc(len);
-	memset(c,'\0', len);
-       	for(i = len-1; i >= 0; i--) {
-               	if(path[i] == '/') { 
-			tot_len = i;
-			break;
-       		}
-	}
-	if(tot_len == 0 ) tot_len = 1;
-	memcpy(c,path,tot_len);
-	log_msg("\nDEBUG: Parent of %s is %s\n",path,c);
-       	return c;
+       int i, len = strlen(path), add = 0;
+       char* c = (char*) malloc(strlen(path));
+       for(i = len; i >= 0; i--) {
+               if(path[i] == '/') add = 1;
+               if(add) c[i] = path[i];
+               else c[i] = '\0';
+       }
+       return c;
 }
 
 char* get_relative_path(char* path) {
-
-	int i,j, rel_len = 0, len = strlen(path);
-        for(i = len; i >= 0; i--) {
-		rel_len++;
-        	if(path[i] == '/') break;
-        }
-
-	char* c = (char*) malloc(rel_len);
-	for(j = 0; j < rel_len; j++) {
-		c[j] = path[len-rel_len+1+j];
+ 	int i, len = strlen(path), rel_len = 0, add = 0;
+	if(len == 1) return path;
+       	for(i = len-1; i >= 0; i--) {
+       		rel_len++;
+		if(path[i] == '/') break;
 	}
-
-	c[j] = '\0';
-	log_msg("\nDEBUG: relative path of %s is %s\n",c,path);
-
-	return c+1;
+       	char* c = (char*) malloc(rel_len);
+	memset(c,'\0',rel_len);
+	memcpy(c, path+(len-rel_len+1), rel_len-1);
+	log_msg("\nDEBUG: relative path of %s is %s\n",path,c);
+       	return c;
 
 }
 
@@ -295,27 +282,22 @@ void *sfs_init(struct fuse_conn_info *conn)
     
     /* Open disk file */
     disk_open((SFS_DATA)->diskfile);
-    // struct stat *statbuf = (struct stat*) malloc(sizeof(struct stat));
-    // int i = lstat((SFS_DATA)->diskfile,statbuf);
+    struct stat *statbuf = (struct stat*) malloc(sizeof(struct stat));
+    int i = lstat((SFS_DATA)->diskfile,statbuf);
     
     // struct stat *tstStat = (struct stat*) malloc(sizeof(struct stat));
     // lstat("/", tstStat);
-    // log_msg("\n\nDEBUG: Test stat: \n\n");
-    // log_stat(statbuf); 
+    log_msg("\n\nDEBUG: Test stat: \n\n");
+    log_stat(statbuf); 
     log_msg("\n\nDEBUG: inode size %d", sizeof(inode_t));
 
     inds_bitmap.size = INODE_BITMAP_SIZE;
     dt_bitmap.size = DATA_BITMAP_SIZE;
 
-    /*
     if(i != 0) {
         perror("No STAT on diskfile");
 	exit(EXIT_FAILURE);
     }
-    */
-
-	log_msg("\nDEBUG: INITIALIZING FUSE with CONTEXT: \n\n");
-	log_conn(conn);
 
     log_msg("\nChecking SUPERBLOCK\n");
     
@@ -412,7 +394,7 @@ void *sfs_init(struct fuse_conn_info *conn)
 
 	if(block_read(DATA_BITMAP, buffer) > 0 ) {
 		memcpy(&dt_bitmap, buffer, sizeof(struct data_bitmap));
-		log_msg("\n\tDATA BITMAP INITIALIZED\n");	
+		log_msg("\n\tDATA BITMAP INITIALIZA\n");	
 	}
 
 	memset(buffer,0,BLOCK_SIZE);
@@ -654,28 +636,12 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
  */
 int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-    	log_msg("\nsfs_read(path=\"%s\", buf=%s, size=%d, offset=%lld, fi=0x%08x)\n",
+    int retstat = 0;
+    log_msg("\nsfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
-	
-	inode_t *n = get_inode(path);
-	if(n) {
-		log_msg("\nDEBUG: reading for file: %s\n",path);
-		int total_size = n->size;
-		if (n->size <= BLOCK_SIZE) {
-			log_msg("\nDEBUG: Attempting to read data block: BASE+index (%d)\n",(BASE_DATA_BLOCK+n->block_ptrs[0]));
-			char* tmp_buf = (char*) malloc(size);
-			if(block_read((BASE_DATA_BLOCK + n->block_ptrs[0]),tmp_buf) > -1) {
-				memcpy(buf,tmp_buf,size);
-				log_msg("\nDEBUG: copying size:%d, buffer:%s from original buffer: %s\n",size, buf, tmp_buf);
-			} else log_msg("\nDEBUG: Failed to read file ... \n");
-		} else {
-			// TODO - implement handle multiblock reads
-		}
-	} else {
-		return -EBADF; 
-	}
+
    
-    	return size;
+    return retstat;
 }
 
 /** Write data to an open file
@@ -709,15 +675,14 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 				
 				if(block_write(BASE_DATA_BLOCK+first_block,buf) >= size) {
 					
+					log_msg("\nDEBUG: block: %d successfully written for file: %s with buffer: %s\n",first_block,path,buf);
 					set_bit(&dt_bitmap,first_block);
 					node->size = size;
-					node->block_ptrs[0] = first_block;
 					node->created = time(NULL);
 					node->modified = time(NULL);
 					
-					log_msg("\nDEBUG: block: %d successfully written for file: %s with size:%d, buffer:%s\n",first_block,path,size,buf);
 					// save data bitmap
-					save_data_bitmap(&dt_bitmap);
+					save_data_bitmap(&dt_bitmap.bitmap);
 					// update inodes table
 					update_inode(node);
 					retstat = size;
@@ -738,34 +703,12 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 /** Create a directory */
 int sfs_mkdir(const char *path, mode_t mode)
 {
-    	log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
+    int retstat = 0;
+    log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
 	    path, mode);
    
-	time_t t = time(NULL);
-	int uid = getuid();
-	int gid = getegid();
-	int firstBit = get_first_unset_bit(&inds_bitmap.bitmap, inds_bitmap.size);
-	
-	if(firstBit > -1) {
-		set_bit(&inds_bitmap.bitmap,firstBit);	
-		inds_table.table[firstBit].bit_pos = firstBit;		// each inode will keep track of its bitmap
-		memcpy(&inds_table.table[firstBit].path, path, strlen(path));	// set inode 0 as root by default			
-		inode_t* n = &inds_table.table[firstBit];
-		n->st_mode = S_IFDIR | mode;
-		n->inode_id = firstBit;
-		n->size = 0;
-		n->created = t;
-		n->links_count = 2; // at least . and ..
-		n->blocks = 0;
-		n->uid = uid;
-		n->gid = gid;
-		n->is_dir = 1;
-		save_inodes_bitmap(&inds_bitmap);
-		update_inode(n);
-		log_msg("DEBUG: New DIRECTORY created: %s\n",path);
-    	} else return -ENOENT;
-
-    	return 0;
+    
+    return retstat;
 }
 
 
@@ -847,10 +790,10 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
                         	// is child!
                                 log_msg("\n\tDEBUG: inode (%s) is child\n",n->path);
                                 struct stat* s = (struct stat*) malloc(sizeof(struct stat));
-    				memset(s,0,sizeof(struct stat));
+                                memset(s,0,sizeof(struct stat));
                                 s->st_uid = n->uid;
                                 s->st_gid = n->gid;
-                                // s->st_ino = n->inode_id;
+                                s->st_ino = n->inode_id;
                                 s->st_mode = n->st_mode;
                                 s->st_size = n->size;
                                 s->st_ctime = n->created;
