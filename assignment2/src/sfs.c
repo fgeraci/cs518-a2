@@ -225,33 +225,42 @@ struct inodes_bitmap inds_bitmap;
 struct data_bitmap dt_bitmap;
 
 char* get_parent(char* path) {
-       int i, len = strlen(path), add = 0;
-       char* c = (char*) malloc(strlen(path));
-       for(i = len; i >= 0; i--) {
-               if(path[i] == '/') add = 1;
-               if(add) c[i] = path[i];
-               else c[i] = '\0';
-       }
-       return c;
+	int i, len = strlen(path), tot_size=0, add = 0;
+	char* c = (char*) malloc(strlen(path));
+	memset(c,'\0',len);
+	for(i = len; i >= 0; i--) {
+               	if(path[i] == '/') {
+			tot_size = i;
+			break;
+		}
+               	//if(add) c[i] = path[i];
+		// else c[i] = '\0';
+	}
+	
+	if(i > 0) {
+		memcpy(c,path,tot_size);
+	} else memcpy(c,path,1);
+	return c;
 }
 
 char* get_relative_path(char* path) {
-
+	
 	int i,j, rel_len = 0, len = strlen(path);
-        for(i = len; i >= 0; i--) {
+
+        if(len == 1) return path;
+
+	for(i = len-1; i >= 0; i--) {
 		rel_len++;
         	if(path[i] == '/') break;
         }
 
 	char* c = (char*) malloc(rel_len);
-	for(j = 0; j < rel_len; j++) {
-		c[j] = path[len-rel_len+1+j];
-	}
+	memset(c,'\0',rel_len);
+	memcpy(c, path+(len-rel_len+1), rel_len-1);	
 
-	c[j] = '\0';
-	log_msg("\nDEBUG: relative path of %s is %s\n",c,path);
+	log_msg("\nDEBUG: relative path of %s is %s\n",path,c);
 
-	return c+1;
+	return c;
 
 }
 
