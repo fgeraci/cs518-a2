@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <math.h>
 
 #ifdef HAVE_SYS_XATTR_H
 #include <sys/xattr.h>
@@ -669,12 +670,33 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
  */
 int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
-    int retstat = 0;
-    log_msg("\nsfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+    	int retstat = 0;
+    	log_msg("\nsfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
-
+	inode_t *n = get_inode(path);
+	if(n) {
+		log_msg("\nDEBUG: reading for file: %s\n",path);
+		int total_size = n->size;
+		int total_blocks = ceil(n->size/BLOCK_SIZE);
+		if (n->size <= BLOCK_SIZE) {
+			log_msg("\nDEBUG: Attempting to read data block: BASE+index (%d)\n",(BASE_DATA_BLOCK+n->block_ptrs[0]));
+			char* tmp_buf = (char*) malloc(size);
+			if(block_read((BASE_DATA_BLOCK + n->block_ptrs[0]),tmp_buf) > -1) {
+				log_msg("\nDEBUG: copying buffer: %s\n", tmp_buf);
+				memcpy(buf,tmp_buf,size);
+				size = n->size;
+				memset(buf,'a',size);
+			} else log_msg("\nDEBUG: Failed to read file ... \n");
+		} else if (total_blocks <= BLOCK_PTRS_MAX ){
+			// TODO - implement handle multiblock reads - this should be easily done upstairs, quick n diry though
+		} else {
+			// handle indirection here
+		}
+	} else {
+		return -EBADF; 
+	}
    
-    return retstat;
+    	return retstat;
 }
 
 /** Write data to an open file
