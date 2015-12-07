@@ -1,0 +1,157 @@
+diff --git a/assignment2/src/sfs.c b/assignment2/src/sfs.c
+index fb5ee6c..3880d2c 100644
+--- a/assignment2/src/sfs.c
++++ b/assignment2/src/sfs.c
+@@ -38,7 +38,7 @@
+ 
+ #define TOTAL_DISK_BLOCKS	1024 // random initial value - 512 kb
+ #define INODE_BLOCKS		64   // total possible nodes blocks, initially
+-#define MAX_PATH		128  // longest name in bytes
++#define MAX_PATH		64  // longest name in bytes
+ 
+ #define DISK_FILE_SIZE		(TOTAL_DISK_BLOCKS*BLOCK_SIZE)
+ #define MAX_INODES		((BLOCK_SIZE*INODE_BLOCKS)/sizeof(struct inode))
+@@ -55,6 +55,9 @@
+ 
+ #define BLOCK_ADDRESS(indx)	(BLOCK_SIZE*indx)
+ 
++
++#define BLOCK_PTRS_MAX		15
++
+ 	// TODO - DONE - ensure well-rounded inode size values though - pref. 256 b per inode for 256 inodes total (64*512b)/256	 
+ 
+ 
+@@ -72,17 +75,18 @@ struct inode {
+ 	// ideally we need to set the struct size to be 256 bytes
+ 	int inode_id;
+ 	int size;
++	int in_use;
+ 	mode_t st_mode;
+ 	long last_accessed, created, modified;
+ 	int links_count;
+ 	int blocks;
+ 	int uid, gid;
+ 	int bit_pos;
+-	unsigned int block_ptrs[15];
++	unsigned int block_ptrs[BLOCK_PTRS_MAX];
+ 	inode_t *next, *prev;		// handle overflow
+-	unsigned char path[64];
+-	int is_dir;		// confirm this is indeed 64 byes (allignment)
+-	unsigned int padding[13];	// this pushes the struct to 256 bytes for now	
++	unsigned char path[PATH_MAX];
++	int is_dir;			// confirm this is indeed 64 byes (allignment)
++	unsigned int padding[12];	// this pushes the struct to 256 bytes for now	
+ };
+ 
+ 
+@@ -198,6 +202,18 @@ void update_inode(inode_t* n) {
+ 	}
+ }
+ 
++char* get_parent(char* path) {	
++	int i, len = strlen(path), add = 0;
++	char* c = (char*) malloc(strlen(path));
++	for(i = len; i >= 0; i--) {
++		if(path[i] == '/') add = 1;
++		if(add) c[i] = path[i];
++		else c[i] = '\0';		
++	}
++	return c;
++}
++
++
+ /* end Util */
+ 
+ static void sfs_fullpath(char fpath[PATH_MAX], const char *path) {
+@@ -223,6 +239,24 @@ struct inodes_bitmap inds_bitmap;
+ struct data_bitmap dt_bitmap;
+ 
+ 
++/* I don't know if this is sustainable */
++void add_child(inode_t *p, inode_t* c) {
++	// adding c as child of p
++	if(p && c) {
++		if(p->is_dir) {
++			int free_data_block = get_first_unset_bit(&dt_bitmap.bitmap, dt_bitmap.size);
++			int children = p->links_count;
++			if(children > (BLOCK_PTRS_MAX*(BLOCK_SIZE/MAX_PATH))) {
++				// TODO - overflow to a new inode to keep directories - this would mean there are ~120 dirs per block here	
++			} else {
++				// get the right block
++				int block = p->block_ptrs[(int)((p->links_count-2)/(BLOCK_SIZE/MAX_PATH))];	// number of links / how many we fit per block for propoer block index	
++			}
++		} else log_msg("\nDEBUG: %s IS NOT A DIRECTORY! What in hell is going on!\n",p->path);
++	} else log_msg("\nDEBUG: FATAL - cannot add child to directory\n");	
++}
++
++
+ struct inode *get_inode(const char *path) {
+ 	int i;
+ 	log_msg("\nDEBUG: Looking for inode with path: %s\n", path);
+@@ -317,6 +351,7 @@ void *sfs_init(struct fuse_conn_info *conn)
+ 	n->uid = uid;
+ 	n->gid = gid;
+ 	n->is_dir = 1;
++	n->in_use = 1;
+ 	/* end */
+ 
+ 	int blocks;
+@@ -502,11 +537,16 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
+ 	    node->gid = getegid();
+ 	    node->block_ptrs[0] = block; // mark it as the main block - reserve it
+ 	    node->bit_pos = inode_indx;
++	    node->in_use = 1;
+ 	    if(S_ISDIR(mode)) {
+ 	    	n->is_dir = 1;
+  	    }
+ 
+-	    log_msg("\nDEBUG: inode created !!! inode_id: %d, with path: %s\n", node->inode_id, node->path);
++	    char* parent = get_parent(path);
++	    log_msg("\nDEBUG: inode created !!! - PARENT: %s - inode_id: %d, with path: %s\n", parent, node->inode_id, node->path); 
++	    
++	    // appends directory entry to parent
++	    // add_child(get_inode(parent),node);
+ 
+ 	    // persist inode - make sure not to override another one
+ 	    char* buffer = (char*) malloc(BLOCK_SIZE);
+@@ -746,13 +786,37 @@ int sfs_opendir(const char *path, struct fuse_file_info *fi)
+ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,
+ 	       struct fuse_file_info *fi)
+ {
+-    int retstat = 0;
++    	int retstat = 0;
++
+ 	log_msg("\nDEBUG: Attempting to readdir: %s ...\n", path);
+ 		
+ 	filler(buf, ".", NULL, 0);
+ 	filler(buf, "..", NULL, 0);    
+-
+-    return retstat;
++	
++	/* Find nodes and fill buffer up - brute force it - brandead to make ti work, then I will optimize, fix, etc.. */
++	int i;
++	for(i = 0; i < MAX_INODES; i++) {
++		if(is_bit_set(&inds_bitmap.bitmap,i)) {
++			inode_t* n = &inds_table.table[i];
++			if(strcmp(get_parent(n->path), path) == 0) {
++				// is child!
++				log_msg("\n\tDEBUG: inode (%s) is child\n");
++				struct stat* s = (struct stat*) malloc(sizeof(struct stat));
++				memset(s,0,sizeof(struct stat));
++				s->st_uid = n->uid;
++				s->st_gid = n->gid;
++				s->st_ino = n->inode_id;
++				s->st_mode = n->st_mode;
++				s->st_size = n->size;
++				s->st_ctime = n->created;
++				s->st_mtime = n->modified;
++				s->st_atime = n->last_accessed;
++				filler(buf,n->path,s,0);	
++			}
++		}	
++	}
++	
++	return retstat;
+ }
+ 
+ /** Release directory

@@ -64,11 +64,12 @@ int block_read(const int block_num, void *buf)
  */
 int block_write(const int block_num, const void *buf)
 {
+    log_msg("\nDEBUG: Attempting to write buf 0x%8x in block %d\n",buf,block_num);	
     int retstat = 0;
     retstat = pwrite(diskfile, buf, BLOCK_SIZE, block_num*BLOCK_SIZE);
     if (retstat < 0)
 	perror("block_write failed");
-    
+    log_msg("\nDEBUG: WRITE BLOCK %d with RETURN: %d\n",block_num,retstat); 
     return retstat;
 }
 

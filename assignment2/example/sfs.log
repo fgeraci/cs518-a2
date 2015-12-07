@@ -1,89 +1,1073 @@
 
 CS518 - Initializing - sfs_init()
-    conn:
-    proto_major = 7
-    proto_minor = 13
-    async_read = 1
-    max_write = 131072
-    max_readahead = 131072
-    capable = 0000007b
-    want = 00000010
+
+
+DEBUG: Test stat: 
+
+    si:
+    st_dev = 28
+    st_ino = 93070592
+    st_mode = 0100600
+    st_nlink = 1
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 68096
+    st_blksize = 8192
+    st_blocks = 88
+    st_atime = 0x5665b8bd
+    st_mtime = 0x5665b87a
+    st_ctime = 0x5665b87a
+
+
+DEBUG: inode size 256
+Checking SUPERBLOCK
+
+	SUPERBLOCK FOUND - Reading INODES BITMAP, DATA BITMAP and INODES TABLE
+
+	INODES BITMAP READ
+
+	DATA BITMAP INITIALIZA
+
+	Attempting to load INODE (id: 0) in block 0, position: 0
+
+	INODE: 0 successfully loaded - with path: / 
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 1) in block 0, position: 1
+
+	INODE: 1 successfully loaded - with path: /dir 
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 0
+
+	Attempting to load INODE (id: 2) in block 1, position: 0
+
+	INODE: 2 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 3) in block 1, position: 1
+
+	INODE: 3 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 1
+
+	Attempting to load INODE (id: 4) in block 2, position: 0
+
+	INODE: 4 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 5) in block 2, position: 1
+
+	INODE: 5 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 2
+
+	Attempting to load INODE (id: 6) in block 3, position: 0
+
+	INODE: 6 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 7) in block 3, position: 1
+
+	INODE: 7 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 3
+
+	Attempting to load INODE (id: 8) in block 4, position: 0
+
+	INODE: 8 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 9) in block 4, position: 1
+
+	INODE: 9 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 4
+
+	Attempting to load INODE (id: 10) in block 5, position: 0
+
+	INODE: 10 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 11) in block 5, position: 1
+
+	INODE: 11 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 5
+
+	Attempting to load INODE (id: 12) in block 6, position: 0
+
+	INODE: 12 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 13) in block 6, position: 1
+
+	INODE: 13 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 6
+
+	Attempting to load INODE (id: 14) in block 7, position: 0
+
+	INODE: 14 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 15) in block 7, position: 1
+
+	INODE: 15 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 7
+
+	Attempting to load INODE (id: 16) in block 8, position: 0
+
+	INODE: 16 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 17) in block 8, position: 1
+
+	INODE: 17 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 8
+
+	Attempting to load INODE (id: 18) in block 9, position: 0
+
+	INODE: 18 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 19) in block 9, position: 1
+
+	INODE: 19 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 9
+
+	Attempting to load INODE (id: 20) in block 10, position: 0
+
+	INODE: 20 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 21) in block 10, position: 1
+
+	INODE: 21 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 10
+
+	Attempting to load INODE (id: 22) in block 11, position: 0
+
+	INODE: 22 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 23) in block 11, position: 1
+
+	INODE: 23 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 11
+
+	Attempting to load INODE (id: 24) in block 12, position: 0
+
+	INODE: 24 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 25) in block 12, position: 1
+
+	INODE: 25 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 12
+
+	Attempting to load INODE (id: 26) in block 13, position: 0
+
+	INODE: 26 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 27) in block 13, position: 1
+
+	INODE: 27 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 13
+
+	Attempting to load INODE (id: 28) in block 14, position: 0
+
+	INODE: 28 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 29) in block 14, position: 1
+
+	INODE: 29 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 14
+
+	Attempting to load INODE (id: 30) in block 15, position: 0
+
+	INODE: 30 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 31) in block 15, position: 1
+
+	INODE: 31 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 15
+
+	Attempting to load INODE (id: 32) in block 16, position: 0
+
+	INODE: 32 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 33) in block 16, position: 1
+
+	INODE: 33 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 16
+
+	Attempting to load INODE (id: 34) in block 17, position: 0
+
+	INODE: 34 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 35) in block 17, position: 1
+
+	INODE: 35 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 17
+
+	Attempting to load INODE (id: 36) in block 18, position: 0
+
+	INODE: 36 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 37) in block 18, position: 1
+
+	INODE: 37 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 18
+
+	Attempting to load INODE (id: 38) in block 19, position: 0
+
+	INODE: 38 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 39) in block 19, position: 1
+
+	INODE: 39 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 19
+
+	Attempting to load INODE (id: 40) in block 20, position: 0
+
+	INODE: 40 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 41) in block 20, position: 1
+
+	INODE: 41 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 20
+
+	Attempting to load INODE (id: 42) in block 21, position: 0
+
+	INODE: 42 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 43) in block 21, position: 1
+
+	INODE: 43 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 21
+
+	Attempting to load INODE (id: 44) in block 22, position: 0
+
+	INODE: 44 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 45) in block 22, position: 1
+
+	INODE: 45 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 22
+
+	Attempting to load INODE (id: 46) in block 23, position: 0
+
+	INODE: 46 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 47) in block 23, position: 1
+
+	INODE: 47 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 23
+
+	Attempting to load INODE (id: 48) in block 24, position: 0
+
+	INODE: 48 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 49) in block 24, position: 1
+
+	INODE: 49 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 24
+
+	Attempting to load INODE (id: 50) in block 25, position: 0
+
+	INODE: 50 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 51) in block 25, position: 1
+
+	INODE: 51 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 25
+
+	Attempting to load INODE (id: 52) in block 26, position: 0
+
+	INODE: 52 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 53) in block 26, position: 1
+
+	INODE: 53 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 26
+
+	Attempting to load INODE (id: 54) in block 27, position: 0
+
+	INODE: 54 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 55) in block 27, position: 1
+
+	INODE: 55 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 27
+
+	Attempting to load INODE (id: 56) in block 28, position: 0
+
+	INODE: 56 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 57) in block 28, position: 1
+
+	INODE: 57 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 28
+
+	Attempting to load INODE (id: 58) in block 29, position: 0
+
+	INODE: 58 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 59) in block 29, position: 1
+
+	INODE: 59 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 29
+
+	Attempting to load INODE (id: 60) in block 30, position: 0
+
+	INODE: 60 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 61) in block 30, position: 1
+
+	INODE: 61 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 30
+
+	Attempting to load INODE (id: 62) in block 31, position: 0
+
+	INODE: 62 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 63) in block 31, position: 1
+
+	INODE: 63 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 31
+
+	Attempting to load INODE (id: 64) in block 32, position: 0
+
+	INODE: 64 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 65) in block 32, position: 1
+
+	INODE: 65 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 32
+
+	Attempting to load INODE (id: 66) in block 33, position: 0
+
+	INODE: 66 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 67) in block 33, position: 1
+
+	INODE: 67 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 33
+
+	Attempting to load INODE (id: 68) in block 34, position: 0
+
+	INODE: 68 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 69) in block 34, position: 1
+
+	INODE: 69 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 34
+
+	Attempting to load INODE (id: 70) in block 35, position: 0
+
+	INODE: 70 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 71) in block 35, position: 1
+
+	INODE: 71 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 35
+
+	Attempting to load INODE (id: 72) in block 36, position: 0
+
+	INODE: 72 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 73) in block 36, position: 1
+
+	INODE: 73 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 36
+
+	Attempting to load INODE (id: 74) in block 37, position: 0
+
+	INODE: 74 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 75) in block 37, position: 1
+
+	INODE: 75 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 37
+
+	Attempting to load INODE (id: 76) in block 38, position: 0
+
+	INODE: 76 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 77) in block 38, position: 1
+
+	INODE: 77 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 38
+
+	Attempting to load INODE (id: 78) in block 39, position: 0
+
+	INODE: 78 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 79) in block 39, position: 1
+
+	INODE: 79 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 39
+
+	Attempting to load INODE (id: 80) in block 40, position: 0
+
+	INODE: 80 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 81) in block 40, position: 1
+
+	INODE: 81 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 40
+
+	Attempting to load INODE (id: 82) in block 41, position: 0
+
+	INODE: 82 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 83) in block 41, position: 1
+
+	INODE: 83 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 41
+
+	Attempting to load INODE (id: 84) in block 42, position: 0
+
+	INODE: 84 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 85) in block 42, position: 1
+
+	INODE: 85 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 42
+
+	Attempting to load INODE (id: 86) in block 43, position: 0
+
+	INODE: 86 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 87) in block 43, position: 1
+
+	INODE: 87 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 43
+
+	Attempting to load INODE (id: 88) in block 44, position: 0
+
+	INODE: 88 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 89) in block 44, position: 1
+
+	INODE: 89 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 44
+
+	Attempting to load INODE (id: 90) in block 45, position: 0
+
+	INODE: 90 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 91) in block 45, position: 1
+
+	INODE: 91 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 45
+
+	Attempting to load INODE (id: 92) in block 46, position: 0
+
+	INODE: 92 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 93) in block 46, position: 1
+
+	INODE: 93 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 46
+
+	Attempting to load INODE (id: 94) in block 47, position: 0
+
+	INODE: 94 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 95) in block 47, position: 1
+
+	INODE: 95 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 47
+
+	Attempting to load INODE (id: 96) in block 48, position: 0
+
+	INODE: 96 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 97) in block 48, position: 1
+
+	INODE: 97 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 48
+
+	Attempting to load INODE (id: 98) in block 49, position: 0
+
+	INODE: 98 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 99) in block 49, position: 1
+
+	INODE: 99 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 49
+
+	Attempting to load INODE (id: 100) in block 50, position: 0
+
+	INODE: 100 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 101) in block 50, position: 1
+
+	INODE: 101 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 50
+
+	Attempting to load INODE (id: 102) in block 51, position: 0
+
+	INODE: 102 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 103) in block 51, position: 1
+
+	INODE: 103 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 51
+
+	Attempting to load INODE (id: 104) in block 52, position: 0
+
+	INODE: 104 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 105) in block 52, position: 1
+
+	INODE: 105 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 52
+
+	Attempting to load INODE (id: 106) in block 53, position: 0
+
+	INODE: 106 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 107) in block 53, position: 1
+
+	INODE: 107 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 53
+
+	Attempting to load INODE (id: 108) in block 54, position: 0
+
+	INODE: 108 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 109) in block 54, position: 1
+
+	INODE: 109 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 54
+
+	Attempting to load INODE (id: 110) in block 55, position: 0
+
+	INODE: 110 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 111) in block 55, position: 1
+
+	INODE: 111 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 55
+
+	Attempting to load INODE (id: 112) in block 56, position: 0
+
+	INODE: 112 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 113) in block 56, position: 1
+
+	INODE: 113 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 56
+
+	Attempting to load INODE (id: 114) in block 57, position: 0
+
+	INODE: 114 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 115) in block 57, position: 1
+
+	INODE: 115 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 57
+
+	Attempting to load INODE (id: 116) in block 58, position: 0
+
+	INODE: 116 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 117) in block 58, position: 1
+
+	INODE: 117 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 58
+
+	Attempting to load INODE (id: 118) in block 59, position: 0
+
+	INODE: 118 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 119) in block 59, position: 1
+
+	INODE: 119 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 59
+
+	Attempting to load INODE (id: 120) in block 60, position: 0
+
+	INODE: 120 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 121) in block 60, position: 1
+
+	INODE: 121 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 60
+
+	Attempting to load INODE (id: 122) in block 61, position: 0
+
+	INODE: 122 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 123) in block 61, position: 1
+
+	INODE: 123 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 61
+
+	Attempting to load INODE (id: 124) in block 62, position: 0
+
+	INODE: 124 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 125) in block 62, position: 1
+
+	INODE: 125 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 62
+
+	Attempting to load INODE (id: 126) in block 63, position: 0
+
+	INODE: 126 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 256 bytes
+	Offset moved, new offset: 256
+
+	Attempting to load INODE (id: 127) in block 63, position: 1
+
+	INODE: 127 successfully loaded - with path:  
+
+	DEBUG: Buffer will be moved 512 bytes
+	Offset moved, new offset: 0
+
+DEBUG: BLOCK FINISHED LOADING: 63
+
+	INODES TABLE INITIALIZED
+
+Fuse Context: 
     context:
-    fuse = 00c8f530
+    fuse = 012ed530
     uid = 0
     gid = 0
     pid = 0
-    private_data = 00c8f010
-    logfile = 00c8f030
-    diskfile = /ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile
+    private_data = 012ed010
+    logfile = 012ed030
+    diskfile = /ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk
     umask = 00000
 
-sfs_getattr(path="", statbuf=0x560a1d10)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 00
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 0
-    st_atime = 0x00000000
-    st_mtime = 0x00000000
-    st_ctime = 0x00000000
+sfs_init OUT
 
-sfs_getattr(path="", statbuf=0x56aa2d10)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 00
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 0
-    st_atime = 0x00000000
-    st_mtime = 0x00000000
-    st_ctime = 0x00000000
+DISKFILE Terminated OK
 
-sfs_getattr(path="/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/", statbuf=0x560a1d10)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 00
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 0
-    st_atime = 0x00000000
-    st_mtime = 0x00000000
-    st_ctime = 0x00000000
-
-sfs_getattr(path="/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/", statbuf=0x56aa2d10)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/testfile/"
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 00
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 0
-    st_atime = 0x00000000
-    st_mtime = 0x00000000
-    st_ctime = 0x00000000
-
-sfs_destroy(userdata=0x00c8f010)
+sfs_destroy(userdata=0x012ed010)
