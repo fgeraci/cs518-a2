@@ -162,14 +162,19 @@ void get_full_path(char *path);
 // having two functions is stupid though, but I might need this for now
 
 void save_inodes_bitmap(struct inodes_bitmap* ptr) {
-	
-	while(!(block_write(INODE_BITMAP,ptr) > 0)) { }
-	log_msg("\nDEBUG: Failed to save inodes_bitmap into disk\n");
+	if(block_write(INODE_BITMAP,ptr) > 0) {
+		log_msg("\nDEBUG: inodes_bitmap successfully updated on disk\n");
+	} else {
+		log_msg("\nDEBUG: Failed to save inodes_bitmap into disk\n");
+	}	
 }
 
 void save_data_bitmap(struct data_bitmap* ptr) {
-	while(!(block_write(DATA_BITMAP,ptr) > 0)) { }
-	log_msg("\nDEBUG: data_bitmap successfully updated on disk\n");
+	if(block_write(DATA_BITMAP,ptr) > 0) {
+		log_msg("\nDEBUG: data_bitmap successfully updated on disk\n");
+	} else {
+		log_msg("\nDEBUG: Failed to save data_bitmap into disk\n");
+	}
 }
 
 void update_inode(inode_t* n) {		
