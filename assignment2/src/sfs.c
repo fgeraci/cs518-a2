@@ -225,14 +225,16 @@ struct inodes_bitmap inds_bitmap;
 struct data_bitmap dt_bitmap;
 
 char* get_parent(char* path) {
-       int i, len = strlen(path), add = 0;
-       char* c = (char*) malloc(strlen(path));
-       for(i = len; i >= 0; i--) {
-               if(path[i] == '/') add = 1;
-               if(add) c[i] = path[i];
-               else c[i] = '\0';
-       }
-       return c;
+       	int i, len = strlen(path), tot_len = 0;
+	if(len == 1) return path; // root special case
+       	for(i = len-1; i >= 0; i--) {
+               if(path[i] == '/') tot_len = i;
+       	}
+	if(tot_len == 0) tot_len++; // compensate for root case
+       	char* c = (char*) malloc(tot_len);
+	memcpy(c,path,tot_len);
+       	log_msg("\nDEBUG: parent of %s is %s", path,c);
+	return c;
 }
 
 char* get_relative_path(char* path) {
