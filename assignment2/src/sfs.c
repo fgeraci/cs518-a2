@@ -161,7 +161,7 @@ void get_full_path(char *path);
 // after creating inodes or data blocks
 // having two functions is stupid though, but I might need this for now
 
-void save_inodes_bitmap(void* ptr) {
+void save_inodes_bitmap(struct inodes_bitmap* ptr) {
 	if(block_write(INODE_BITMAP,ptr) > 0) {
 		log_msg("\nDEBUG: inodes_bitmap successfully updated on disk\n");
 	} else {
@@ -169,7 +169,7 @@ void save_inodes_bitmap(void* ptr) {
 	}	
 }
 
-void save_data_bitmap(unsigned char* ptr) {
+void save_data_bitmap(struct data_bitmap* ptr) {
 	if(block_write(DATA_BITMAP,ptr) > 0) {
 		log_msg("\nDEBUG: data_bitmap successfully updated on disk\n");
 	} else {
@@ -225,42 +225,41 @@ struct inodes_bitmap inds_bitmap;
 struct data_bitmap dt_bitmap;
 
 char* get_parent(char* path) {
-	int i, len = strlen(path), tot_size=0, add = 0;
-	char* c = (char*) malloc(strlen(path));
-	memset(c,'\0',len);
-	for(i = len; i >= 0; i--) {
-               	if(path[i] == '/') {
-			tot_size = i;
-			break;
-		}
-               	//if(add) c[i] = path[i];
-		// else c[i] = '\0';
-	}
+       	int i, len = strlen(path), tot_len = 0,add = 0;
 	
-	if(i > 0) {
-		memcpy(c,path,tot_size);
-	} else memcpy(c,path,1);
-	return c;
+	if(len == 1) return path; // root special case
+       
+	char* c = (char*) malloc(len);
+	memset(c,'\0', len);
+       	for(i = len-1; i >= 0; i--) {
+               	if(path[i] == '/') { 
+			tot_len = i;
+			break;
+       		}
+	}
+	if(tot_len == 0 ) tot_len = 1;
+	memcpy(c,path,tot_len);
+	log_msg("\nDEBUG: Parent of %s is %s\n",path,c);
+       	return c;
 }
 
 char* get_relative_path(char* path) {
-	
+
 	int i,j, rel_len = 0, len = strlen(path);
-
-        if(len == 1) return path;
-
-	for(i = len-1; i >= 0; i--) {
+        for(i = len; i >= 0; i--) {
 		rel_len++;
         	if(path[i] == '/') break;
         }
 
 	char* c = (char*) malloc(rel_len);
-	memset(c,'\0',rel_len);
-	memcpy(c, path+(len-rel_len+1), rel_len-1);	
+	for(j = 0; j < rel_len; j++) {
+		c[j] = path[len-rel_len+1+j];
+	}
 
-	log_msg("\nDEBUG: relative path of %s is %s\n",path,c);
+	c[j] = '\0';
+	log_msg("\nDEBUG: relative path of %s is %s\n",c,path);
 
-	return c;
+	return c+1;
 
 }
 
@@ -413,7 +412,7 @@ void *sfs_init(struct fuse_conn_info *conn)
 
 	if(block_read(DATA_BITMAP, buffer) > 0 ) {
 		memcpy(&dt_bitmap, buffer, sizeof(struct data_bitmap));
-		log_msg("\n\tDATA BITMAP INITIALIZA\n");	
+		log_msg("\n\tDATA BITMAP INITIALIZED\n");	
 	}
 
 	memset(buffer,0,BLOCK_SIZE);
@@ -718,7 +717,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 					
 					log_msg("\nDEBUG: block: %d successfully written for file: %s with size:%d, buffer:%s\n",first_block,path,size,buf);
 					// save data bitmap
-					save_data_bitmap(&dt_bitmap.bitmap);
+					save_data_bitmap(&dt_bitmap);
 					// update inodes table
 					update_inode(node);
 					retstat = size;
