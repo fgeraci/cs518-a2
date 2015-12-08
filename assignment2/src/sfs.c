@@ -542,6 +542,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
      	    node->created = time(NULL);
 	    node->uid = getuid();
 	    node->gid = getegid();
+	    node->blocks = 0;
 	    node->block_ptrs[0] = block; // mark it as the main block - reserve it
 	    node->bit_pos = inode_indx;
 	    if(S_ISDIR(mode)) {
@@ -719,11 +720,65 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
     
 	/* handle block wirtting here */ 
 	if(size > 0) {
+
 		// find the owner node
 	   	inode_t *node = get_inode(path);
 		int tot_blocks = ceil(size/BLOCK_SIZE);
+
 		// get the main block
-		int first_block = node->block_ptrs[0];
+		int first_block = (int) offset / BLOCK_SIZE;
+
+		int i, rem = size, tmp_off = offset - (BLOCK_SIZE*first_block); // 654 --> block 1 with offset 654 - (512*1) = 142
+		for(i = first_block; i < BLOCK_PTRS_MAX; i++) {
+		
+			// prep buffer
+			char* c = (char*) malloc(BLOCK_SIZE);
+			memset(c,'\0',BLOCK_SIZE);
+			
+			// select the propert data block from disk - if new, grab it and set it
+			int b;	
+			if( (i+1) > node->blocks || ! node->blocks ) {
+				node->blocks++;
+				node->block_ptrs[i] = get_first_unset_bit(&dt_bitmap.bitmap,dt_bitmap.size);
+				set_bit(&dt_bitmap.bitmap,node->block_ptrs[i]);
+			}
+			b = node->block_ptrs[i];
+
+			if(block_read(BASE_DATA_BLOCK + b,c) > -1) {
+			
+				// grab the right part of the buffer
+				memcpy(c+tmp_off,buf, rem - BLOCK_SIZE <= 0 ? rem : rem - BLOCK_SIZE);
+
+				// write block	
+				if(block_write(BASE_DATA_BLOCK + b, c) < 0) {
+					log_msg("\nDEBUG: FATAL WRITTING TO BLOCK %d for node %s with buf %s\n",b,node->path,c);
+					break;
+				}
+
+				// adjust all control values
+				rem -= (BLOCK_SIZE-tmp_off);
+				if(rem <= 0) {
+					log_msg("\nDEBUG: all written ok, breaking\n");
+					break;
+				}
+				tmp_off = tmp_off - BLOCK_SIZE < 0 ? 0 : tmp_off - BLOCK_SIZE;
+			} else {
+				log_msg("\nDEBUG: Error writting size: %d offset: %d buf: %s\n",size,offset,buf);
+			}
+		}
+		if(rem > 0) {
+			// handle indirection here
+		}
+
+		// update all data
+	
+		node->size = size;
+		node->modified = time(NULL);
+		update_inode(node);
+		save_inodes_bitmap(&inds_bitmap);
+		save_data_bitmap(&dt_bitmap);
+		retstat = size;
+/*
 		if(first_block >= 0) {
 			if(size <= BLOCK_SIZE) {
 				log_msg("\nDEBUG: single block size - attempting to write %d bytes for buffer %s in block: BASE_DATA_BLOCK+offset(%d)", size, buf, BASE_DATA_BLOCK+first_block);	
@@ -752,7 +807,8 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 		} else {
 			log_msg("\nDEBUG: No blocks available ... exiting sfs_write for inode: %s\n", path);
 			return -EIO;
-		} 
+		}
+*/ 
 	} else log_msg("\nDEBUG: Nothing to write to disk for inode: %s\n",path);
 
  	return retstat;
