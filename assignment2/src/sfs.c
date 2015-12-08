@@ -491,6 +491,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 	statbuf->st_uid = n->uid;
 	statbuf->st_gid = n->gid;
 	statbuf->st_ctime = n->created;
+	statbuf->st_size = n->size;
     } else {
     	/* inode not found, handle here */
 	log_msg("\ninode not found, tmp path is: %s\n",tmp);
@@ -680,11 +681,12 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 		int total_blocks = ceil(total_size/BLOCK_SIZE);
 		if (n->size <= BLOCK_SIZE) {
 			log_msg("\nDEBUG: Attempting to read data block: BASE+index (%d)\n",(BASE_DATA_BLOCK+n->block_ptrs[0]));
-			char* tmp_buf = (char*) malloc(size);
+			// char* tmp_buf = (char*) malloc(size);
+			char tmp_buf[BLOCK_SIZE];
 			if(block_read((BASE_DATA_BLOCK + n->block_ptrs[0]),tmp_buf) > -1) {
-				log_msg("\nDEBUG: copying buffer: %s\n", tmp_buf);
-				memcpy(buf,tmp_buf+offset,size);
-				size = n->size;
+				memcpy(buf,tmp_buf+offset,BLOCK_SIZE);
+				log_msg("\nDEBUG: copying size: %d buffer: %s\n", n->size, buf);
+				retstat = n->size;
 			} else log_msg("\nDEBUG: Failed to read file ... \n");
 		} else if (total_blocks <= BLOCK_PTRS_MAX ){
 			// TODO - implement handle multiblock reads - this should be easily done upstairs, quick n diry though
@@ -694,7 +696,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 	} else {
 		return -EBADF; 
 	}
-  	log_msg("\nDEBUG: sfs_read() exit with size: %d, and buffer: %s\n",size,buf); 
+  	log_msg("\nDEBUG: sfs_read() exit with size: %d, and buffer: %s\n",retstat,buf); 
     	return retstat;
 }
 
