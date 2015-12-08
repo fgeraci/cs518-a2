@@ -683,20 +683,37 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 		if (n->size <= BLOCK_SIZE) {
 			log_msg("\nDEBUG: Attempting to read data block: BASE+index (%d)\n",(BASE_DATA_BLOCK+n->block_ptrs[0]));
 			// char* tmp_buf = (char*) malloc(size);
+			log_msg("\nDEBUG: copying size: %d buffer: %s\n", n->size, buf);
 			char tmp_buf[BLOCK_SIZE];
 			if(block_read((BASE_DATA_BLOCK + n->block_ptrs[0]),tmp_buf) > -1) {
 				memcpy(buf,tmp_buf+offset,BLOCK_SIZE);
-				log_msg("\nDEBUG: copying size: %d buffer: %s\n", n->size, buf);
-				retstat = n->size;
 			} else log_msg("\nDEBUG: Failed to read file ... \n");
-		} else if (total_blocks <= BLOCK_PTRS_MAX ){
-			// TODO - implement handle multiblock reads - this should be easily done upstairs, quick n diry though
 		} else {
-			// handle indirection here
+			// TODO - implement handle multiblock reads - this should be easily done upstairs, quick n diry though
+			int start_block = offset / BLOCK_SIZE;
+			int i, rem = size, tmp_off = offset - BLOCK_SIZE*start_block;
+			for(i = start_block; i < (size/BLOCK_SIZE); ++i) {	
+				int b = n->block_ptrs[i];
+				char* c = (char*) malloc(BLOCK_SIZE);
+				memset(c,'\0',BLOCK_SIZE);
+				if(block_read(BASE_DATA_BLOCK+b, c) < 0) { log_msg("\nDEBUG: Error reading block ...\n"); break; }
+				memcpy(buf,c+tmp_off,BLOCK_SIZE-tmp_off);
+				
+				// adjust all control values
+				rem -= (BLOCK_SIZE-tmp_off);
+				if(rem <= 0) {
+					log_msg("\nDEBUG: all read ok, breaking\n");
+					break;
+				}
+				tmp_off = tmp_off - BLOCK_SIZE < 0 ? 0 : tmp_off - BLOCK_SIZE;
+			}
+			
 		}
 	} else {
 		return -EBADF; 
 	}
+
+	retstat = n->size;
   	log_msg("\nDEBUG: sfs_read() exit with size: %d, and buffer: %s\n",retstat,buf); 
     	return retstat;
 }
@@ -778,37 +795,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 		save_inodes_bitmap(&inds_bitmap);
 		save_data_bitmap(&dt_bitmap);
 		retstat = size;
-/*
-		if(first_block >= 0) {
-			if(size <= BLOCK_SIZE) {
-				log_msg("\nDEBUG: single block size - attempting to write %d bytes for buffer %s in block: BASE_DATA_BLOCK+offset(%d)", size, buf, BASE_DATA_BLOCK+first_block);	
-				// TODO - handle offset param
-				// handle single block writes here
-				
-				if(block_write(BASE_DATA_BLOCK+first_block,buf) >= size) {
-					
-					log_msg("\nDEBUG: block: %d successfully written for file: %s with buffer: %s\n",first_block,path,buf);
-					set_bit(&dt_bitmap,first_block);
-					node->size = size;
-					node->created = time(NULL);
-					node->modified = time(NULL);
-					
-					// save data bitmap
-					save_data_bitmap(&dt_bitmap);
-					// update inodes table
-					update_inode(node);
-					retstat = size;
-					
-					// AT THIS POINT < INODE (update), BITMAP (updated), BLOCK (WRITTEN) 
-				}	
-			} else {
-				// overflow here with indirection
-			} 		
-		} else {
-			log_msg("\nDEBUG: No blocks available ... exiting sfs_write for inode: %s\n", path);
-			return -EIO;
-		}
-*/ 
+
 	} else log_msg("\nDEBUG: Nothing to write to disk for inode: %s\n",path);
 
  	return retstat;
