@@ -12,12 +12,12 @@ DEBUG: Test stat:
     st_uid = 82136
     st_gid = 1234
     st_rdev = 0
-    st_size = 68608
+    st_size = 69632
     st_blksize = 8192
     st_blocks = 88
-    st_atime = 0x56661a91
-    st_mtime = 0x56661ead
-    st_ctime = 0x56661ead
+    st_atime = 0x5666651e
+    st_mtime = 0x5666653c
+    st_ctime = 0x5666653c
 
 
 DEBUG: inode size 256
@@ -54,7 +54,7 @@ DEBUG: BLOCK FINISHED LOADING: 0
 
 	Attempting to load INODE (id: 3) in block 1, position: 1
 
-	INODE: 3 successfully loaded - with path: /dir/dir2 
+	INODE: 3 successfully loaded - with path: /dir/test2.txt 
 
 	DEBUG: Buffer will be moved 512 bytes
 	Offset moved, new offset: 0
@@ -63,14 +63,14 @@ DEBUG: BLOCK FINISHED LOADING: 1
 
 	Attempting to load INODE (id: 4) in block 2, position: 0
 
-	INODE: 4 successfully loaded - with path: /dir/dir2/test2.txt 
+	INODE: 4 successfully loaded - with path: /dir3 
 
 	DEBUG: Buffer will be moved 256 bytes
 	Offset moved, new offset: 256
 
 	Attempting to load INODE (id: 5) in block 2, position: 1
 
-	INODE: 5 successfully loaded - with path:  
+	INODE: 5 successfully loaded - with path: /dir3/test3.txt 
 
 	DEBUG: Buffer will be moved 512 bytes
 	Offset moved, new offset: 0
@@ -1057,19 +1057,19 @@ DEBUG: BLOCK FINISHED LOADING: 63
 
 Fuse Context: 
     context:
-    fuse = 00de7530
+    fuse = 00c22530
     uid = 0
     gid = 0
     pid = 0
-    private_data = 00de7010
-    logfile = 00de7030
-    diskfile = /ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk
+    private_data = 00c22010
+    logfile = 00c22030
+    diskfile = /.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk
     umask = 00000
 
 sfs_init OUT
 
-sfs_getattr(path="/", statbuf=0x6d062d10)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/"
+sfs_getattr(path="/", statbuf=0xcb406d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/"
 
 DEBUG: Looking for inode with path: /
 
@@ -1089,9 +1089,9 @@ DEBUG: inode found with stat
     st_blocks = 0
     st_atime = 0x00000000
     st_mtime = 0x00000000
-    st_ctime = 0x56661a92
+    st_ctime = 0x566663ba
 
-sfs_opendir(path="/", fi=0x6d062d80)
+sfs_opendir(path="/", fi=0xcb406d80)
 
 DEBUG: Looking for inode with path: /
 
@@ -1121,12 +1121,18 @@ DEBUG: parent of /dir is /
 
 DEBUG: relative path of /dir is dir
 
-DEBUG: parent of /dir/dir2 is /dir
+DEBUG: parent of /dir/test2.txt is /dir
 
-DEBUG: parent of /dir/dir2/test2.txt is /dir/dir2
+DEBUG: parent of /dir3 is /
 
-sfs_getattr(path="/test1.txt", statbuf=0x6d062d40)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/test1.txt", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/test1.txt"
+	DEBUG: inode (/dir3) is child
+
+DEBUG: relative path of /dir3 is dir3
+
+DEBUG: parent of /dir3/test3.txt is /dir3
+
+sfs_getattr(path="/test1.txt", statbuf=0xcb406d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/test1.txt", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/test1.txt"
 
 DEBUG: Looking for inode with path: /test1.txt
 
@@ -1141,15 +1147,15 @@ DEBUG: inode found with stat
     st_uid = 82136
     st_gid = 1234
     st_rdev = 0
-    st_size = 8
+    st_size = 925
     st_blksize = 0
     st_blocks = 0
     st_atime = 0x00000000
     st_mtime = 0x00000000
-    st_ctime = 0x56661a9a
+    st_ctime = 0x56666419
 
-sfs_getattr(path="/dir", statbuf=0x67ffed40)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir"
+sfs_getattr(path="/dir", statbuf=0xcbe07d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir"
 
 DEBUG: Looking for inode with path: /dir
 
@@ -1169,11 +1175,34 @@ DEBUG: inode found with stat
     st_blocks = 0
     st_atime = 0x00000000
     st_mtime = 0x00000000
-    st_ctime = 0x56661e97
+    st_ctime = 0x5666651e
+
+sfs_getattr(path="/dir3", statbuf=0xcb406d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir3", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir3"
+
+DEBUG: Looking for inode with path: /dir3
+
+	Found node '/dir3'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040700
+    st_nlink = 2
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x56666530
 
 DEBUG: releasing / ... 
 
-sfs_opendir(path="/dir", fi=0x6d062d80)
+sfs_opendir(path="/dir", fi=0xcbe07d80)
 
 DEBUG: Looking for inode with path: /dir
 
@@ -1195,20 +1224,384 @@ DEBUG: parent of /test1.txt is /
 
 DEBUG: parent of /dir is /
 
-DEBUG: parent of /dir/dir2 is /dir
+DEBUG: parent of /dir/test2.txt is /dir
 
-	DEBUG: inode (/dir/dir2) is child
+	DEBUG: inode (/dir/test2.txt) is child
 
-DEBUG: relative path of /dir/dir2 is dir2
+DEBUG: relative path of /dir/test2.txt is test2.txt
 
-DEBUG: parent of /dir/dir2/test2.txt is /dir/dir2
+DEBUG: parent of /dir3 is /
 
-sfs_getattr(path="/dir/dir2", statbuf=0x6d062d40)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir/dir2", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir/dir2"
+DEBUG: parent of /dir3/test3.txt is /dir3
 
-DEBUG: Looking for inode with path: /dir/dir2
+sfs_getattr(path="/dir/test2.txt", statbuf=0xcbe07d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir/test2.txt", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir/test2.txt"
 
-	Found node '/dir/dir2'
+DEBUG: Looking for inode with path: /dir/test2.txt
+
+	Found node '/dir/test2.txt'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100600
+    st_nlink = 0
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 4
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x56666525
+
+DEBUG: releasing /dir ... 
+
+sfs_opendir(path="/dir3", fi=0xcb406d80)
+
+DEBUG: Looking for inode with path: /dir3
+
+	Found node '/dir3'
+
+DEBUG: root found in opendir with fd: 0x00000004
+    fi:
+    flags = 0x00098800
+    fh_old = 0x00000000
+    writepage = 0
+    direct_io = 0
+    keep_cache = 0
+    fh = 0x0000000000000000
+    lock_owner = 0x0000000000000000
+
+DEBUG: Attempting to readdir: /dir3 ...
+
+DEBUG: parent of /test1.txt is /
+
+DEBUG: parent of /dir is /
+
+DEBUG: parent of /dir/test2.txt is /dir
+
+DEBUG: parent of /dir3 is /
+
+DEBUG: parent of /dir3/test3.txt is /dir3
+
+	DEBUG: inode (/dir3/test3.txt) is child
+
+DEBUG: relative path of /dir3/test3.txt is test3.txt
+
+sfs_getattr(path="/dir3/test3.txt", statbuf=0xcb406d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir3/test3.txt", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir3/test3.txt"
+
+DEBUG: Looking for inode with path: /dir3/test3.txt
+
+	Found node '/dir3/test3.txt'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100600
+    st_nlink = 0
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 5
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x56666537
+
+DEBUG: releasing /dir3 ... 
+
+sfs_getattr(path="/", statbuf=0xcbe07d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/"
+
+DEBUG: Looking for inode with path: /
+
+	Found node '/'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x566663ba
+
+sfs_getattr(path="/", statbuf=0xcb406d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/"
+
+DEBUG: Looking for inode with path: /
+
+	Found node '/'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x566663ba
+
+sfs_opendir(path="/", fi=0xcbe07d80)
+
+DEBUG: Looking for inode with path: /
+
+	Found node '/'
+
+DEBUG: root found in opendir with fd: 0x00000000
+    fi:
+    flags = 0x00098800
+    fh_old = 0x00000000
+    writepage = 0
+    direct_io = 0
+    keep_cache = 0
+    fh = 0x0000000000000000
+    lock_owner = 0x0000000000000000
+
+DEBUG: Attempting to readdir: / ...
+
+DEBUG: parent of /test1.txt is /
+
+	DEBUG: inode (/test1.txt) is child
+
+DEBUG: relative path of /test1.txt is test1.txt
+
+DEBUG: parent of /dir is /
+
+	DEBUG: inode (/dir) is child
+
+DEBUG: relative path of /dir is dir
+
+DEBUG: parent of /dir/test2.txt is /dir
+
+DEBUG: parent of /dir3 is /
+
+	DEBUG: inode (/dir3) is child
+
+DEBUG: relative path of /dir3 is dir3
+
+DEBUG: parent of /dir3/test3.txt is /dir3
+
+DEBUG: releasing / ... 
+
+sfs_getattr(path="/test1.txt", statbuf=0xcbe07d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/test1.txt", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/test1.txt"
+
+DEBUG: Looking for inode with path: /test1.txt
+
+	Found node '/test1.txt'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100600
+    st_nlink = 0
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 925
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x56666419
+
+sfs_open(path"/test1.txt", fi=0xcb406e40)
+
+sfs_read(path="/test1.txt", buf=0xc4001640, size=4096, offset=0, fi=0xcbe07e40)
+
+DEBUG: Looking for inode with path: /test1.txt
+
+	Found node '/test1.txt'
+
+DEBUG: reading for file: /test1.txt
+
+DEBUG: all read ok, breaking
+
+DEBUG: sfs_read() exit with size: 925, and buffer: aaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+sfs_getattr(path="/test1.txt", statbuf=0xcb406d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/test1.txt", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/test1.txt"
+
+DEBUG: Looking for inode with path: /test1.txt
+
+	Found node '/test1.txt'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100600
+    st_nlink = 0
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 925
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x56666419
+
+sfs_release(path="/test1.txt", fi=0xcb406e40)
+
+sfs_getattr(path="/", statbuf=0xcbe07d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/"
+
+DEBUG: Looking for inode with path: /
+
+	Found node '/'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x566663ba
+
+sfs_opendir(path="/", fi=0xcb406d80)
+
+DEBUG: Looking for inode with path: /
+
+	Found node '/'
+
+DEBUG: root found in opendir with fd: 0x00000000
+    fi:
+    flags = 0x00098800
+    fh_old = 0x00000000
+    writepage = 0
+    direct_io = 0
+    keep_cache = 0
+    fh = 0x0000000000000000
+    lock_owner = 0x0000000000000000
+
+DEBUG: Attempting to readdir: / ...
+
+DEBUG: parent of /test1.txt is /
+
+	DEBUG: inode (/test1.txt) is child
+
+DEBUG: relative path of /test1.txt is test1.txt
+
+DEBUG: parent of /dir is /
+
+	DEBUG: inode (/dir) is child
+
+DEBUG: relative path of /dir is dir
+
+DEBUG: parent of /dir/test2.txt is /dir
+
+DEBUG: parent of /dir3 is /
+
+	DEBUG: inode (/dir3) is child
+
+DEBUG: relative path of /dir3 is dir3
+
+DEBUG: parent of /dir3/test3.txt is /dir3
+
+DEBUG: releasing / ... 
+
+sfs_getattr(path="/", statbuf=0xcb406d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/"
+
+DEBUG: Looking for inode with path: /
+
+	Found node '/'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x566663ba
+
+sfs_opendir(path="/", fi=0xcbe07d80)
+
+DEBUG: Looking for inode with path: /
+
+	Found node '/'
+
+DEBUG: root found in opendir with fd: 0x00000000
+    fi:
+    flags = 0x00098800
+    fh_old = 0x00000000
+    writepage = 0
+    direct_io = 0
+    keep_cache = 0
+    fh = 0x0000000000000000
+    lock_owner = 0x0000000000000000
+
+DEBUG: Attempting to readdir: / ...
+
+DEBUG: parent of /test1.txt is /
+
+	DEBUG: inode (/test1.txt) is child
+
+DEBUG: relative path of /test1.txt is test1.txt
+
+DEBUG: parent of /dir is /
+
+	DEBUG: inode (/dir) is child
+
+DEBUG: relative path of /dir is dir
+
+DEBUG: parent of /dir/test2.txt is /dir
+
+DEBUG: parent of /dir3 is /
+
+	DEBUG: inode (/dir3) is child
+
+DEBUG: relative path of /dir3 is dir3
+
+DEBUG: parent of /dir3/test3.txt is /dir3
+
+DEBUG: releasing / ... 
+
+sfs_getattr(path="/dir3", statbuf=0xcbe07d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir3", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir3"
+
+DEBUG: Looking for inode with path: /dir3
+
+	Found node '/dir3'
 
 DEBUG: inode found with stat
     si:
@@ -1224,17 +1617,38 @@ DEBUG: inode found with stat
     st_blocks = 0
     st_atime = 0x00000000
     st_mtime = 0x00000000
-    st_ctime = 0x56661e9c
+    st_ctime = 0x56666530
 
-DEBUG: releasing /dir ... 
+sfs_getattr(path="/", statbuf=0xcb406d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/"
 
-sfs_opendir(path="/dir/dir2", fi=0x67ffed80)
+DEBUG: Looking for inode with path: /
 
-DEBUG: Looking for inode with path: /dir/dir2
+	Found node '/'
 
-	Found node '/dir/dir2'
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x566663ba
 
-DEBUG: root found in opendir with fd: 0x00000003
+sfs_opendir(path="/dir3", fi=0xcbe07d80)
+
+DEBUG: Looking for inode with path: /dir3
+
+	Found node '/dir3'
+
+DEBUG: root found in opendir with fd: 0x00000004
     fi:
     flags = 0x00098800
     fh_old = 0x00000000
@@ -1244,26 +1658,30 @@ DEBUG: root found in opendir with fd: 0x00000003
     fh = 0x0000000000000000
     lock_owner = 0x0000000000000000
 
-DEBUG: Attempting to readdir: /dir/dir2 ...
+DEBUG: Attempting to readdir: /dir3 ...
 
 DEBUG: parent of /test1.txt is /
 
 DEBUG: parent of /dir is /
 
-DEBUG: parent of /dir/dir2 is /dir
+DEBUG: parent of /dir/test2.txt is /dir
 
-DEBUG: parent of /dir/dir2/test2.txt is /dir/dir2
+DEBUG: parent of /dir3 is /
 
-	DEBUG: inode (/dir/dir2/test2.txt) is child
+DEBUG: parent of /dir3/test3.txt is /dir3
 
-DEBUG: relative path of /dir/dir2/test2.txt is test2.txt
+	DEBUG: inode (/dir3/test3.txt) is child
 
-sfs_getattr(path="/dir/dir2/test2.txt", statbuf=0x67ffed40)
-    sfs_fullpath:  diskfile = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir/dir2/test2.txt", fpath = "/ilab/users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir/dir2/test2.txt"
+DEBUG: relative path of /dir3/test3.txt is test3.txt
 
-DEBUG: Looking for inode with path: /dir/dir2/test2.txt
+DEBUG: releasing /dir3 ... 
 
-	Found node '/dir/dir2/test2.txt'
+sfs_getattr(path="/dir3/test3.txt", statbuf=0xcbe07d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir3/test3.txt", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir3/test3.txt"
+
+DEBUG: Looking for inode with path: /dir3/test3.txt
+
+	Found node '/dir3/test3.txt'
 
 DEBUG: inode found with stat
     si:
@@ -1274,15 +1692,78 @@ DEBUG: inode found with stat
     st_uid = 82136
     st_gid = 1234
     st_rdev = 0
-    st_size = 8
+    st_size = 5
     st_blksize = 0
     st_blocks = 0
     st_atime = 0x00000000
     st_mtime = 0x00000000
-    st_ctime = 0x56661ea5
+    st_ctime = 0x56666537
 
-DEBUG: releasing /dir/dir2 ... 
+sfs_getattr(path="/dir3", statbuf=0xcb406d40)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir3", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir3"
+
+DEBUG: Looking for inode with path: /dir3
+
+	Found node '/dir3'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040700
+    st_nlink = 2
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x56666530
+
+sfs_open(path"/dir3/test3.txt", fi=0xcbe07e40)
+
+sfs_read(path="/dir3/test3.txt", buf=0xbc001c40, size=4096, offset=0, fi=0xcb406e40)
+
+DEBUG: Looking for inode with path: /dir3/test3.txt
+
+	Found node '/dir3/test3.txt'
+
+DEBUG: reading for file: /dir3/test3.txt
+
+DEBUG: Attempting to read data block: BASE+index (135)
+
+DEBUG: copying size: 5 buffer: 
+
+DEBUG: sfs_read() exit with size: 5, and buffer: abc2
+
+
+sfs_getattr(path="/dir3/test3.txt", statbuf=0xcbe07d10)
+    sfs_fullpath:  diskfile = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk", path = "/dir3/test3.txt", fpath = "/.autofs/ilab/ilab_users/fgeraci/Development/CS518/A2/assignment2/example/virtual_disk/dir3/test3.txt"
+
+DEBUG: Looking for inode with path: /dir3/test3.txt
+
+	Found node '/dir3/test3.txt'
+
+DEBUG: inode found with stat
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100600
+    st_nlink = 0
+    st_uid = 82136
+    st_gid = 1234
+    st_rdev = 0
+    st_size = 5
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x56666537
+
+sfs_release(path="/dir3/test3.txt", fi=0xcb406e40)
 
 DISKFILE Terminated OK
 
-sfs_destroy(userdata=0x00de7010)
+sfs_destroy(userdata=0x00c22010)
